@@ -1,0 +1,356 @@
+/*
+ * Heading font: a subset of Noto Serif SC SemiBold containing only the characters used by the interface copy (scripts/subset-font.py), in two
+ * files: its Latin letters and general punctuation (about 16 KiB) and its Han characters with the CJK punctuation (about 105 KiB). Each face
+ * takes its file's code points, so the browser downloads the Han file only for a heading with Han text in it: an English page, and the wordmark
+ * in every language, take the Latin file alone. Bundled with the app, with no requests to third-party font services; characters it does not
+ * cover fall back glyph by glyph to the system Song font. License: src/assets/fonts/OFL.txt.
+ */
+@font-face {
+  font-family: "Ksana Serif";
+  src: url("../assets/fonts/ksana-serif-latin.woff2") format("woff2");
+  font-weight: 500 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0-2FFF;
+}
+
+@font-face {
+  font-family: "Ksana Serif";
+  src: url("../assets/fonts/ksana-serif-han.woff2") format("woff2");
+  font-weight: 500 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+3000-303F, U+3400-9FFF, U+FF00-FFEF;
+}
+
+/*
+ * The Latin file for English and Spanish headings, less its quotation marks and ellipsis: Noto Serif SC sets those full width, as Chinese
+ * text wants, which opens a gap in "Can’t" or around “…”; the next fonts in the stack (tokens.css) supply them
+ */
+@font-face {
+  font-family: "Ksana Serif Latin";
+  src: url("../assets/fonts/ksana-serif-latin.woff2") format("woff2");
+  font-weight: 500 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0-2017, U+2020-2025, U+2027-2FFF;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* A tap on a phone flashes a tint of the page's own ink rather than the browser's black, which the dark theme's grounds hide */
+  -webkit-tap-highlight-color: color-mix(in srgb, var(--ink) 16%, transparent);
+}
+
+html,
+body {
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+  /* Any text, a paragraph, a table cell, a hint below a value or a group's title, avoids ending on a lone word or a lone Chinese or
+     Japanese character where the browser can (a block's unlock entries were titled "... paid / out" on a phone, an empty block's
+     weight hint ended on "reward"). Only the style, which text inherits: a heading balances its lines instead */
+  text-wrap-style: pretty;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+ol,
+ul,
+dl,
+dd,
+figure {
+  margin: 0;
+}
+
+ol,
+ul {
+  padding: 0;
+  list-style: none;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+::selection {
+  background: var(--qing-soft);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--r-seal);
+}
+
+/* ---------- Typography ---------- */
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-synthesis: none;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+
+h1.page-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-synthesis: none;
+  font-size: var(--fs-h1);
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+
+h2.section-title {
+  font-size: var(--fs-lead);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+.eyebrow {
+  font-size: var(--fs-label);
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums slashed-zero;
+  letter-spacing: 0;
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Words that change as the clock ticks, a relative time ("12 s ago") or a wait counted down ("~45 s"): their figures keep one width, so
+   that neither they nor what follows them on the line shifts from one second to the next. Apple's system font, the body face on an
+   iPhone or a Mac, gives each figure its own width */
+.ticking {
+  font-variant-numeric: tabular-nums;
+}
+
+/* In the CJK languages a figure often carries a word in their script (a count's measure word, a duration's units): a monospace space
+   beside a CJK character reads as two, so it is narrowed to about a proportional one */
+:lang(zh) .num,
+:lang(ja) .num,
+:lang(ko) .num {
+  word-spacing: -0.25em;
+}
+
+/* Korean breaks lines at the spaces between its words, not between any two syllables as Chinese and Japanese may; a word too long
+   for its line still breaks rather than overflow */
+html:lang(ko) {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* Japanese keeps a small kana and the long vowel mark off the start of a line, as its typesetting does (the idle lane's note put
+   a small kana first on its second line) */
+html:lang(ja) {
+  line-break: strict;
+}
+
+/* A unit in the body face inside a figure keeps its spaces: the narrowing is sized for the monospace space, and took all of a
+   proportional one (the settlement backlog's unit, "/ 6 BTC blocks", lost its spaces in Chinese) */
+:lang(zh) .num :is(.vital-unit, .amount-unit),
+:lang(ja) .num :is(.vital-unit, .amount-unit),
+:lang(ko) .num :is(.vital-unit, .amount-unit) {
+  word-spacing: normal;
+}
+
+.muted {
+  color: var(--ink-3);
+}
+
+.soft {
+  color: var(--ink-2);
+}
+
+.small {
+  font-size: var(--fs-small);
+}
+
+.label {
+  font-size: var(--fs-label);
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+}
+
+.prose {
+  max-width: 68ch;
+  color: var(--ink-2);
+  line-height: 1.75;
+  /* A paragraph avoids ending on a lone short word where the browser can */
+  text-wrap: pretty;
+}
+
+.prose p + p {
+  margin-top: var(--sp-3);
+}
+
+.prose code,
+code.inline {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--surface-2);
+  padding: 1px 5px;
+  border-radius: var(--r-seal);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.link {
+  color: var(--qing);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--dur-fast);
+}
+
+/*
+ * Hover styles, here and in every style sheet, apply only where a pointer hovers: on a phone a tap leaves the tapped element in its
+ * hover state (the browser's own tap highlight shows the tap)
+ */
+@media (hover: hover) {
+  .link:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* A phrase that a line does not break, such as a label and the name it gives */
+.nobr {
+  white-space: nowrap;
+}
+
+/* ---------- Layout primitives ---------- */
+
+.page {
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  padding-block: var(--sp-6) var(--sp-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  min-width: 0;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.row.wrap {
+  flex-wrap: wrap;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: var(--sp-6);
+}
+
+.grid-halves {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-6);
+}
+
+@media (max-width: 980px) {
+  .grid-2,
+  .grid-halves {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,3640 @@
+/* ================= General utilities ================= */
+
+.gap-4 {
+  gap: 4px;
+}
+
+.gap-6 {
+  gap: 6px;
+}
+
+.gap-8 {
+  gap: 8px;
+}
+
+.dot-sep {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--ink-4);
+  vertical-align: middle;
+}
+
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -40px;
+  z-index: 100;
+  padding: 6px 12px;
+  background: var(--ink);
+  color: var(--on-ink);
+  border-radius: var(--r-ctl);
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
+.app-main {
+  min-height: calc(100vh - 200px);
+}
+
+/* While the page connects (and in index.html's frame before it), the screen under the top bar is the connecting screen's and the footer
+   starts below it, where the page that follows has it: drawn at the screen's foot, the footer came for the length of the first load only to
+   go when the page drew, and where a scroll bar takes room (Windows), the page narrowed by it then, moving everything aside. Where the node
+   cannot be reached, the footer comes up to the screen's foot again with the language menu and the theme switch */
+.app-main--waiting {
+  min-height: 100vh;
+}
+
+/* A page being looked up (`LookupView`, src/components/Lookup.tsx) takes the screen too: drawn short, it brought the footer up for
+   the length of the read, only to send it below the screen as the page drew, and where a scroll bar takes room it took the bar away
+   for as long, everything centred moving 7.5 px aside and back */
+.page--lookup {
+  min-height: 100vh;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+/* ================= Overview ================= */
+
+.hero-panel {
+  padding-bottom: var(--sp-4);
+}
+
+/*
+ * The vitals: five readings in a row on a wide screen; two a row on a narrow one, the suggested fee alone in the middle row; one a row
+ * below 360 px. The parts of a reading (its label, figure, graphic and note) share their rows with the readings beside it (a subgrid),
+ * so a label that takes two lines keeps the figures level and the graphics stand on one line
+ */
+.vitals {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.vital {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--sp-4) var(--sp-5);
+  border-left: 1px solid var(--line);
+  min-width: 0;
+}
+
+.vital:first-child {
+  border-left: 0;
+}
+
+@supports (grid-template-rows: subgrid) {
+  .vital {
+    display: grid;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+  }
+
+  /* A label of one line stands on its figure when the one beside it takes two */
+  .vital-label,
+  .vital > :is(.spark, .mix, .ticks, .meter) {
+    align-self: end;
+  }
+
+  /* The suggested fee's two figures take the rows of a figure and a graphic */
+  .vital-pair {
+    grid-row: span 2;
+  }
+}
+
+/* A long label takes two lines rather than lose its end, broken between words in every language */
+.vital-label {
+  font-size: var(--fs-label);
+  color: var(--ink-3);
+  letter-spacing: 0.03em;
+  text-wrap: balance;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* A phrase of a reading's label or note (Phrases, Overview.tsx), or of a message (the Verify page's typical times, its BTC tip and
+   the indexer's height): whole on a line where it fits, wrapped inside where it does not */
+.phrase {
+  display: inline-block;
+  max-width: 100%;
+  /* A phrase too long for its box splits into lines of even length: pretty wrapping kept "Idle; ~5 s once there are"
+     above a lone "operations", a word too long for it to count as one left alone */
+  text-wrap: balance;
+}
+
+/* The mempool's label is a link: its underline on hover reaches into the phrases */
+.link .phrase {
+  text-decoration: inherit;
+  transition: inherit;
+}
+
+.vital-value {
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.vital-unit {
+  font-size: var(--fs-small);
+  color: var(--ink-3);
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+.vital-sub--warn {
+  color: var(--warn);
+}
+
+.vital-warn {
+  color: var(--warn);
+}
+
+.vital-alarm {
+  color: var(--danger);
+}
+
+/* A note does not end on a lone word where the browser can help it (the Korean idle target left "5 s" alone on a desktop) */
+.vital-sub {
+  font-size: var(--fs-label);
+  color: var(--ink-3);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* A note of words and figures breaks between them, also in Chinese and Japanese, where the packs mark the breaks inside a phrase
+   with zero-width spaces (the fee's note split "fee rate" in two, the backlog's the Japanese for "data") */
+.vital-note {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.vital-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 27px;
+}
+
+/* The bars come closer in a reading under 142 px wide, where 36 bars and gaps of 2 px would not fit (a phone under 382 px, a window just over 900 px) */
+.spark {
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(1px, calc((100% - 72px) / 35), 2px);
+  height: 22px;
+}
+
+.spark i {
+  flex: 1;
+  min-width: 1px;
+  background: var(--qing);
+  opacity: 0.75;
+  border-radius: 1px 1px 0 0;
+}
+
+.spark i.spark-long {
+  background: var(--ink-3);
+}
+
+.mix {
+  display: flex;
+  gap: 2px;
+  height: 6px;
+}
+
+.mix span {
+  border-radius: 2px;
+  min-width: 4px;
+}
+
+.mix-A {
+  background: var(--ink-3);
+}
+
+.mix-B {
+  background: var(--line-strong);
+}
+
+.mix-C {
+  background: var(--ink);
+}
+
+.mix-empty {
+  background: var(--mark-empty);
+}
+
+@media (max-width: 1100px) {
+  .vital {
+    padding: var(--sp-4);
+  }
+}
+
+@media (max-width: 900px) {
+  .vitals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .vital {
+    padding: var(--sp-3) var(--sp-4);
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .vital:nth-child(-n + 2) {
+    border-top: 0;
+  }
+
+  .vital:nth-child(2),
+  .vital:nth-child(5) {
+    border-left: 1px solid var(--line);
+  }
+
+  /* The suggested fee across the row: its two figures side by side and its note on a line where they fit */
+  .vital--fee {
+    grid-column: span 2;
+  }
+
+  .vital-pair {
+    flex-direction: row;
+    flex-wrap: wrap;
+    column-gap: var(--sp-5);
+  }
+}
+
+/* Below 360 px half the row is too narrow for a figure with its unit ("1 / 6 BTC blocks"): one reading a row */
+@media (max-width: 359px) {
+  .vitals {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .vital:nth-child(n) {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .vital:first-child {
+    border-top: 0;
+  }
+
+  .vital--fee {
+    grid-column: auto;
+  }
+}
+
+/* ================= Lists ================= */
+
+/* The blocks page's jump to a height: its field, and the button that goes there for a phone's keypad of digits, which has no return
+   key on an iPhone */
+.jump {
+  display: flex;
+  gap: 6px;
+}
+
+/* Whole in a narrow column: on a tablet the Japanese "unlock" broke a character a line */
+.entry-counts {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+/* The counts line up down the table's column */
+.entry-counts b {
+  font-weight: 500;
+  color: var(--ink);
+  min-width: 1.6em;
+}
+
+/* On a phone, where a row is a card, a count keeps close to its kinds: "1 unlock" read as a count and a word apart */
+@media (max-width: 720px) {
+  .entry-counts {
+    gap: 6px;
+  }
+
+  .entry-counts b {
+    min-width: 0;
+  }
+}
+
+.entry-counts-split {
+  display: inline-flex;
+  gap: 6px;
+  font-size: var(--fs-label);
+  color: var(--ink-3);
+}
+
+/* "unlock" is a word, set in the body face as a unit is, where "B2" and "C1" are codes */
+.entry-counts-word {
+  font-family: var(--font-body);
+}
+
+.entry-counts-c {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* A summary's words, figures and accounts stand on one baseline, each account's seal centred on its words */
+.op-summary {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 7px;
+  min-width: 0;
+}
+
+.op-verb {
+  color: var(--ink);
+}
+
+.op-head-link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+@media (hover: hover) {
+  .op-head-link:hover .op-verb {
+    color: var(--qing);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+.op-arrow {
+  color: var(--ink-3);
+}
+
+/* An arrow, or a call's "@", with the account it points to: a summary too long for its line (a phone's card, an amount with four
+   decimals, the wallet's narrow column) breaks before the arrow, which starts the second line, where it was left at the end of the first */
+.op-party {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* In a table a party's name gives way first: it ends in an ellipsis where the column is too narrow for it, rather than set the width the
+   column needs, where a contract's long name ran the operations list past a tablet's page. An address keeps its tail, which tells it apart */
+.table .op-party:has(.acct-ref-label) {
+  display: inline-grid;
+  grid-template-columns: auto minmax(0, max-content);
+}
+
+/* The path's badge keeps to a summary's first line, its letter on the line's baseline: centred beside a summary of two lines, it sat
+   between them */
+.op-cell {
+  flex-wrap: nowrap;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.op-lines {
+  display: flex;
+  flex-direction: column;
+}
+
+.op-lines li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.op-lines li:first-child {
+  border-top: 1px solid var(--line-strong);
+}
+
+.op-lines li.row-new {
+  animation: row-in 900ms var(--ease-out);
+}
+
+.op-lines .path-badge {
+  padding-top: 1px;
+}
+
+/* The summary's line and the signer's below it 5px apart, so that an operation's link and its signer, each less tall than a fingertip,
+   have their middles 25px apart whatever their widths: WCAG 2.2 asks 24 of targets that small (2.5.8). At 3px they were 23 apart,
+   which axe found on a phone, and 4 left nothing to spare where the link is as wide as the signer */
+.op-line-main {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  font-size: var(--fs-small);
+}
+
+/* The signer and the time, on one line where they fit: under a reader's own wider letter and word spacing the time goes below
+   ("tb1pklkar…4hlm" and "hace 16 min" at 320 px), rather than the address losing its tail, which tells it apart */
+.op-line-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 8px;
+  font-size: var(--fs-label);
+  color: var(--ink-3);
+  min-width: 0;
+}
+
+.op-line-meta .acct-ref {
+  font-size: var(--fs-label);
+}
+
+/* The dot and the time, one piece: below the signer, the time leads with its dot rather than leave it at the end of the signer's line
+   ("bcrt1papwvk…xue9 ·" over "hace un momento" at 320 px) */
+.op-line-when {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.op-line-status {
+  padding-top: 3px;
+}
+
+/* ================= Search overlay (phones) ================= */
+
+.search-overlay {
+  place-items: start stretch;
+  padding: 0;
+}
+
+.search-sheet {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) max(16px, var(--safe-x)) 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  animation: rise-in var(--dur) var(--ease-out);
+}
+
+.search-sheet .icon-btn {
+  margin-top: 7px;
+}
+
+/* ================= Console ================= */
+
+.console-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line);
+}
+
+/* The drawer's header draws the rule above its first group, which would otherwise draw a second one just under it */
+.drawer-body > .console-group:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.console-title {
+  font-weight: 600;
+  font-size: var(--fs-small);
+}
+
+.console-hint {
+  font-size: var(--fs-label);
+  color: var(--ink-3);
+  line-height: 1.6;
+  /* The connected wallet's address, wrapped rather than run past the drawer's edge */
+  overflow-wrap: anywhere;
+}
+
+.console-status {
+  font-size: var(--fs-label);
+  color: var(--warn);
+}
+
+.console-note {
+  font-size: var(--fs-small);
+  padding: 10px 12px;
+  border-radius: var(--r-ctl);
+  background: var(--qing-soft);
+  color: var(--ink);
+}
+
+.console-log {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--fs-label);
+}
+
+.console-log li {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 8px;
+  color: var(--ink-2);
+}
+
+/* ================= Shared across pages ================= */
+
+.narrow-page {
+  max-width: 880px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.check input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--ink);
+}
+
+.input {
+  height: 38px;
+  width: 100%;
+  padding: 0 11px;
+  border: 1px solid var(--line-field);
+  border-radius: var(--r-ctl);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--fs-body);
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+
+/* The ring: 1 px of the accent outside the edge, 4.7:1 at least from what a field sits on, then the accent's soft halo, as the edge's turn
+   to the accent is a change of hue more than of lightness (1.6:1 in the light theme). It is a box shadow, which forced colors (Windows'
+   high contrast themes) drop as they give the border the colour it has unfocused: a transparent outline beside it, which they draw in the
+   theme's colour and which shows nowhere else */
+.input:focus {
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+  border-color: var(--qing);
+  box-shadow: 0 0 0 1px var(--qing), 0 0 0 4px var(--qing-soft);
+}
+
+/* A placeholder in the page's muted ink, as the search box's, 4.5:1 at least on a field in either theme: the browser's own grey, #757575 in
+   Chromium whatever the theme, read 4.48:1 on a field in the light theme and 3.8:1 in the dark one. Firefox draws a placeholder fainter
+   unless told otherwise */
+.input::placeholder {
+  color: var(--ink-3);
+  opacity: 1;
+}
+
+/* A placeholder is a hint in words: it takes the body face even where the value is set in the monospace one */
+.input.mono::placeholder {
+  font-family: var(--font-body);
+  font-variant-numeric: normal;
+}
+
+/* A placeholder or a value longer than its field ends in an ellipsis while the field is not being typed in, rather than cut off within a
+   letter: at 320 px the recipient's "Taproot address or hex account" read "hex accoun". Set on the field, where Chromium draws it for both */
+input.input {
+  text-overflow: ellipsis;
+}
+
+.input--sm {
+  height: 30px;
+  width: 120px;
+  font-size: var(--fs-small);
+}
+
+.input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+/* Focused, a field marked invalid is ringed in the colour of the error, as its edge is */
+.input[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 1px var(--danger), 0 0 0 4px var(--danger-soft);
+}
+
+select.input {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 28px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field-label {
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.field-hint {
+  font-size: var(--fs-label);
+  color: var(--ink-3);
+  /* A hint does not end on a lone word, or a lone Chinese character, where the browser can */
+  text-wrap: pretty;
+}
+
+.field-error {
+  font-size: var(--fs-label);
+  color: var(--danger);
+}
+
+.btn--icon-right {
+  flex-direction: row-reverse;
+}
+
+.is-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.pager {
+  align-items: center;
+}
+
+.pager-hint {
+  display: inline-flex;
+  gap: 4px;
+}
+
+@media (max-width: 720px), (pointer: coarse) {
+  .pager-hint {
+    display: none;
+  }
+}
+
+/* A list's two buttons and the page it is at between them, on one line where they fit: under a reader's own wider letter and word
+   spacing ("Más nuevos", "Página 1 de 2", "Más antiguos" at 320 px) the second button goes below, rather than off the page */
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2) var(--sp-4);
+}
+
+/* The page it is at gives way first: placed by its longest word and grown from there as far as its whole width, it lets the buttons
+   keep its line wherever they fit beside that word, and wraps between them (Spanish at 390 px, as before), the second button going
+   below only where they do not */
+.pagination-page {
+  flex: 1 1 0;
+  max-width: max-content;
+}
+
+/* Below a history list (OlderRows): what it says of how far it reaches, over the button. The note is a live region there from before
+   the first press, empty and taking no room until it has something to say */
+.older-rows {
+  flex-direction: column;
+  gap: 0;
+}
+
+.older-rows > p {
+  margin: 0;
+  text-align: center;
+  /* Centred over the button, a note that wraps splits into even lines: pretty wrapping left the Japanese one's last two characters alone at 320 px */
+  text-wrap: balance;
+}
+
+.older-rows > p:not(:empty) {
+  margin-bottom: var(--sp-2);
+}
+
+.tips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+  padding-left: 1.1em;
+  list-style: disc;
+}
+
+.tips b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.search-results {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line-strong);
+}
+
+.search-results li {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.raw summary {
+  cursor: pointer;
+  font-size: var(--fs-small);
+  color: var(--ink-3);
+  width: fit-content;
+}
+
+@media (hover: hover) {
+  .raw summary:hover {
+    color: var(--ink);
+  }
+}
+
+.raw-pre {
+  margin-top: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  font-size: 12px;
+  line-height: 1.6;
+  max-height: 420px;
+  overflow: auto;
+  white-space: pre;
+}
+
+.result {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--fs-small);
+  white-space: nowrap;
+}
+
+.result--ok {
+  color: var(--ink-2);
+}
+
+.result--fail {
+  color: var(--danger);
+  white-space: normal;
+}
+
+.result--skip {
+  color: var(--warn);
+}
+
+.result--wait {
+  color: var(--qing);
+}
+
+.gas {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gas-num {
+  font-size: var(--fs-small);
+}
+
+.gas-bar {
+  position: relative;
+  width: 44px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--mark-empty);
+  overflow: hidden;
+}
+
+.gas-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--ink-3);
+}
+
+.gas-bar span.gas-full {
+  background: var(--danger);
+}
+
+.meter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 340px;
+}
+
+.meter-row .meter {
+  flex: 1;
+}
+
+.meter-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meter-cell .meter {
+  width: 64px;
+  min-width: 64px;
+}
+
+.settle-version {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  margin: 0 6px;
+}
+
+.entry-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.entry-group + .entry-group {
+  margin-top: var(--sp-4);
+}
+
+.entry-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 6px;
+}
+
+.entry-group-title {
+  font-weight: 600;
+  font-size: var(--fs-small);
+}
+
+.entry-group-hint {
+  font-size: var(--fs-label);
+  color: var(--ink-3);
+}
+
+.stack.gap-24 {
+  gap: var(--sp-5);
+}
+
+.stack.gap-8 {
+  gap: 8px;
+}
+
+.stack.gap-4 {
+  gap: 4px;
+}
+
+/* ================= Operation details ================= */
+
+.op-title {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.35em;
+}
+
+.op-title-amount {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.op-title-amount small {
+  font-family: var(--font-body);
+  font-size: 0.5em;
+  color: var(--ink-3);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.op-title-detail {
+  font-size: 0.7em;
+  color: var(--ink-2);
+}
+
+.journey {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.journey-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.journey-head .section-title {
+  font-family: var(--font-display);
+  font-synthesis: none;
+  letter-spacing: 0.08em;
+}
+
+.journey-foot {
+  border-top: 1px solid var(--line);
+  padding-top: var(--sp-3);
+}
+
+.kv {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.kv-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.kv-k {
+  color: var(--ink-3);
+  font-size: var(--fs-label);
+  font-family: var(--font-mono);
+  min-width: 64px;
+}
+
+/* Bytes given as hex, their length below them (`RawBytes`) */
+.raw-bytes {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.events {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.events li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.event-name {
+  font-weight: 600;
+  font-size: var(--fs-small);
+}
+
+.event-field {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* The name stays whole; a long value (hex data) wraps beside it */
+.event-field .kv-k {
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.event-field > :last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Path A input/output pairs */
+.pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(90px, 0.8fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 560px;
+}
+
+.pair-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-ctl);
+  background: var(--surface);
+  min-width: 0;
+}
+
+.pair-role {
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.pair-ref {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pair-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--ink-3);
+  min-width: 0;
+}
+
+.pair-link svg line,
+.pair-link svg path {
+  stroke: var(--ink-3);
+  stroke-width: 1.4;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.pair-sighash {
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.pair-contrib {
+  font-size: var(--fs-label);
+  white-space: nowrap;
+}
+
+.pair-note {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 560px) {
+  .pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pair-link {
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .pair-link svg {
+    display: none;
+  }
+}
+
+/* ================= Account ================= */
+
+.acct-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.addr-plate {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-3) var(--sp-5);
+}
+
+.addr-row {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 6px 0;
+}
+
+.addr-label {
+  font-size: var(--fs-label);
+  color: var(--ink-3);
+}
+
+.addr-value {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.addr-note {
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+}
+
+@media (max-width: 720px) {
+  .addr-plate {
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  .addr-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .addr-label {
+    grid-column: 1 / -1;
+  }
+
+  /* A balance's asset keeps the width of its name: a balance too long to sit beside it moves to a line of its own under it, rather
+     than squeeze the name into a column a word wide */
+  .table td.m-primary.balance-asset {
+    flex-basis: auto;
+  }
+}
+
+/* ================= BTC transaction ================= */
+
+.txs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-small);
+  white-space: nowrap;
+  color: var(--ink-2);
+}
+
+.txs-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  border: 1.5px solid var(--ink-3);
+}
+
+.txs--fast .txs-dot {
+  border-style: dashed;
+}
+
+.txs--broadcast .txs-dot {
+  border-color: var(--mo);
+  border-radius: 3px;
+}
+
+.txs--on_btc .txs-dot {
+  background: var(--mo);
+  border-color: var(--mo);
+}
+
+.txs--final .txs-dot {
+  background: var(--zhu);
+  border-color: var(--zhu);
+}
+
+.txs--final {
+  color: var(--zhu);
+}
+
+.txs--failed .txs-dot {
+  border-color: var(--danger);
+}
+
+.txs--failed {
+  color: var(--danger);
+}
+
+.txs--stuck .txs-dot {
+  background: var(--warn);
+}
+
+.txs--stuck {
+  color: var(--warn);
+}
+
+/* A settlement's commit transaction below its reveal transaction: the label stays whole (the Japanese label broke into three
+   lines in a tablet's column), and the ID goes under it where the column is narrow. 4px below the reveal transaction rather than the
+   cell's 2: where the label is short, as in Chinese, the commit transaction's ID sits under the reveal transaction's, its middle
+   11.6px from it, where WCAG 2.2 asks 12 of a target less tall than a fingertip (2.5.8) */
+.tx-commit {
+  flex-wrap: wrap;
+  column-gap: 6px;
+  row-gap: 0;
+  margin-top: 2px;
+}
+
+/* The inputs on the left and the outputs on the right, an index to a row under the headings: the page gives each its row (`--row`) */
+.txd {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px minmax(0, 1fr);
+  gap: 8px 0;
+}
+
+.txd-in {
+  grid-row: var(--row);
+  grid-column: 1;
+}
+
+.txd-out {
+  grid-row: var(--row);
+  grid-column: 3;
+}
+
+.txd-head {
+  font-size: var(--fs-label);
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+}
+
+.txd-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-ctl);
+  background: var(--surface);
+  min-width: 0;
+}
+
+.txd-box--producer,
+.txd-box--change {
+  background: var(--surface-2);
+}
+
+.txd-box--op_return {
+  border-color: var(--ink);
+  border-width: 1.5px;
+}
+
+.txd-box--anchor {
+  border-style: dashed;
+}
+
+.txd-box-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-label);
+}
+
+.txd-idx {
+  color: var(--ink-3);
+}
+
+.txd-role {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.txd-type {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--ink-3);
+}
+
+.txd-box-bottom {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.txd-sighash {
+  font-size: 10.5px;
+  color: var(--ink-3);
+}
+
+.txd-op {
+  font-size: var(--fs-label);
+}
+
+/* On a phone, one column in the page's order: the inputs under their heading, then the outputs under theirs */
+@media (max-width: 720px) {
+  .txd {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .txd-in,
+  .txd-out {
+    grid-row: auto;
+    grid-column: auto;
+  }
+
+  .txd-head.txd-out {
+    margin-top: 8px;
+  }
+}
+
+/* ================= Verify ================= */
+
+.verify-flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(110px, 160px) minmax(0, 1fr) minmax(110px, 160px) minmax(0, 1fr);
+  align-items: center;
+  padding: var(--sp-5);
+}
+
+.vf-node {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.vf-label {
+  font-size: var(--fs-label);
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+}
+
+.vf-value {
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.vf-sub {
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+}
+
+.vf-node--indexer .vf-value {
+  color: var(--ink);
+}
+
+.vf-node--alarm .vf-value {
+  color: var(--danger);
+}
+
+.vf-arrow {
+  position: relative;
+  /* The label sits above the arrow and may wrap to two lines (lengths differ by language); the arrow always stays at the bottom */
+  min-height: 32px;
+  padding: 0 6px 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.25;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.vf-arrow::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 14px;
+  bottom: 8px;
+  border-top: 1.5px solid var(--ink-4);
+}
+
+.vf-arrow::after {
+  content: "";
+  position: absolute;
+  right: 10px;
+  bottom: 4px;
+  border: 4.5px solid transparent;
+  border-left: 7px solid var(--ink-4);
+  border-right: 0;
+}
+
+@media (max-width: 860px) {
+  .verify-flow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    padding: var(--sp-4);
+  }
+
+  .vf-arrow {
+    min-height: 28px;
+    justify-content: flex-start;
+    padding: 0 0 0 18px;
+    align-items: center;
+    text-align: left;
+  }
+
+  .vf-arrow::before {
+    left: 6px;
+    right: auto;
+    top: 2px;
+    bottom: 2px;
+    border-top: 0;
+    border-left: 1.5px solid var(--ink-4);
+  }
+
+  .vf-arrow::after {
+    left: 2px;
+    right: auto;
+    bottom: -4px;
+    border: 4.5px solid transparent;
+    border-top: 7px solid var(--ink-4);
+    border-bottom: 0;
+  }
+}
+
+.confirm-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+
+@media (max-width: 720px) {
+  .confirm-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.confirm-card {
+  padding: var(--sp-5);
+  border-radius: var(--r-panel);
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.confirm-card header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--sp-3);
+}
+
+.confirm-card h3 {
+  font-size: var(--fs-lead);
+  font-weight: 600;
+}
+
+.confirm-card dl {
+  display: grid;
+  /* The label column is sized by the longest label: label lengths differ by language */
+  grid-template-columns: minmax(84px, max-content) minmax(0, 1fr);
+  gap: 8px 12px;
+  font-size: var(--fs-small);
+}
+
+.confirm-card dt {
+  color: var(--ink-3);
+}
+
+/* Below 375 px a label goes above its value: beside the longest label the values had a column of a word or two, at 320 px "Everyday,
+   smaller / amounts" and in Spanish seven lines for when data is BTC final, at 360 px "guarantees" alone */
+@media (max-width: 374px) {
+  .confirm-card dl {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .confirm-card dd + dt {
+    margin-top: var(--sp-2);
+  }
+}
+
+/* ================= Contract ================= */
+
+.call-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  align-items: stretch;
+}
+
+.call-form .btn {
+  align-self: flex-start;
+}
+
+.call-result {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: var(--r-ctl);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+
+.call-result--err {
+  border-color: color-mix(in oklab, var(--danger) 40%, transparent);
+  color: var(--danger);
+}
+
+/* A structure's fields: a value that does not fit beside its name goes right below it, closer to its name than to the next field */
+.call-result .kv {
+  gap: 6px;
+}
+
+.call-result .kv-row {
+  row-gap: 0;
+}
+
+/* ================= Wallet: connect ================= */
+
+.connect-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.connect-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-4);
+  width: 100%;
+  padding: var(--sp-4) var(--sp-5);
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  color: inherit;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+
+.connect-card--primary {
+  border-color: var(--line-strong);
+}
+
+@media (hover: hover) {
+  .connect-card--primary:hover {
+    border-color: var(--ink);
+    box-shadow: var(--shadow);
+  }
+}
+
+.connect-card--off {
+  opacity: 0.6;
+}
+
+/* A wallet not found offers no action: its card says how to install it, and a dimmed "Connect" bar read as one to press */
+.connect-card--off .connect-go {
+  display: none;
+}
+
+/* Not usable right now, but clicking it tells you how to use it (a browser wallet inside the simulator: go switch the data source) */
+.connect-card--hint .connect-title,
+.connect-card--hint .connect-icon--text {
+  color: var(--ink-2);
+}
+
+@media (hover: hover) {
+  .connect-card--hint:hover {
+    border-color: var(--line-strong);
+  }
+}
+
+.connect-go--ghost {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+@media (hover: hover) {
+  .connect-card--hint:hover .connect-go--ghost {
+    box-shadow: inset 0 0 0 1px var(--ink);
+  }
+}
+
+.connect-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+}
+
+/* A wallet's initial on a tile, which a wallet not found leaves dashed and unfilled */
+.connect-icon--text {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-ctl);
+  background: var(--surface-2);
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.connect-card--off .connect-icon--text {
+  border-style: dashed;
+  background: none;
+  color: var(--ink-3);
+}
+
+/* A touch screen (a phone, a tablet without a trackpad) has no extensions: a wallet not found is opened in the browser inside its app
+   instead, and its card says so where a computer's names the extension */
+@media (pointer: coarse) {
+  .connect-install {
+    display: none;
+  }
+}
+
+@media not all and (pointer: coarse) {
+  .connect-in-app {
+    display: none;
+  }
+}
+
+.connect-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* A wallet's tag goes below its name where the two do not fit, as in a narrow window under a reader's own wider spacing, rather than run
+   past the card */
+.connect-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-weight: 600;
+}
+
+.connect-text {
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+
+.connect-go {
+  font-weight: 600;
+  color: var(--ink);
+  padding: 6px 12px;
+  border-radius: var(--r-ctl);
+  background: var(--ink);
+  color: var(--on-ink);
+  font-size: var(--fs-small);
+}
+
+@media (max-width: 560px) {
+  .connect-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .connect-go {
+    grid-column: 1 / -1;
+    text-align: center;
+  }
+}
+
+.explain-grid {
+  display: grid;
+  /* Even columns, but one whose heading has a phrase wider than its share widens to hold it and the other two give way, rather than the
+     phrase run past it: the Japanese third heading keeps its first clause whole up to its comma, 227 px where the share is 208 at 721 px,
+     and 254 px under a reader's own wider spacing, which took the page 6 px sideways at 768 px */
+  grid-template-columns: repeat(3, 1fr);
+  /* Side by side the three headings share a row, so that the lines under them start level where a heading takes two lines */
+  grid-template-rows: auto auto;
+  column-gap: var(--sp-5);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--line);
+}
+
+.explain-grid > div {
+  display: grid;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+}
+
+@media (max-width: 720px) {
+  .explain-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    row-gap: var(--sp-5);
+  }
+
+  .explain-grid > div {
+    display: block;
+    grid-row: auto;
+  }
+}
+
+/* A heading of two lines balances them and breaks between words in every language (at 320 px the Japanese first one broke inside a word) */
+.explain-title {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  margin-bottom: 4px;
+  text-wrap: balance;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.explain-text {
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+
+/* ================= Wallet home ================= */
+
+/* On the narrowest phones (320px) the explorer link moves to a second line, rather than every piece breaking up */
+.wallet-addr {
+  flex-wrap: wrap;
+  row-gap: 2px;
+  color: var(--ink-2);
+}
+
+.wallet-addr > * {
+  white-space: nowrap;
+}
+
+/* The contract playground's card (D-119): the sentence beside its link, the link below it on a phone */
+.wallet-playground {
+  gap: var(--sp-3) var(--sp-5);
+}
+
+.wallet-playground > p {
+  flex: 1 1 24rem;
+  margin: 0;
+}
+
+/*
+ * On phones the bottom bar carries Send, Receive and Top up, so the head keeps only its two icons (hide balances, settings),
+ * at the right of the title row: below the eyebrow's line and gap, as tall as the seal and the buttons (36px)
+ */
+@media (max-width: 860px) {
+  .wallet-head {
+    position: relative;
+  }
+
+  .wallet-head .wallet-head-btn {
+    display: none;
+  }
+
+  .wallet-head .page-actions {
+    position: absolute;
+    top: calc(var(--fs-label) * 1.4 + 6px);
+    right: 0;
+    gap: 0;
+  }
+}
+
+/* BTC, then KSA, side by side; the tokens below them, across the row. One column on phones, in the same order */
+.balances {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+
+.balance-tokens {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 860px) {
+  .balances {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-3);
+  }
+}
+
+.balance-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+}
+
+@media (max-width: 720px) {
+  .balance-card {
+    padding: var(--sp-4);
+  }
+}
+
+/*
+ * A long balance shrinks to fit its card instead of running out of it: the card is a size container, and the figure divides its
+ * width by its number of characters (`--figure-chars`, set by Amount and Sats), each about 0.6em of the mono face, after about 48px
+ * for the unit; never below 18px. The unit wraps under the figure rather than overflow.
+ */
+.balance-card .amount--xl {
+  flex-wrap: wrap;
+}
+
+@supports (width: 1cqi) {
+  .balance-card {
+    container-type: inline-size;
+  }
+
+  .balance-card .amount--xl {
+    font-size: clamp(18px, calc((100cqi - 48px) / (var(--figure-chars, 1) * 0.6)), var(--fs-figure));
+  }
+}
+
+/* A line under a balance: the unconfirmed part of the BTC, or why it could not be read */
+.balance-note {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--ink-2);
+}
+
+.balance-note--warn {
+  color: var(--warn);
+}
+
+.balance-note--warn .link-btn {
+  color: inherit;
+}
+
+.balance-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+/* Empty wallet: one sentence and a top-up entry point replace the split chart */
+.balance-empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* The indexer line in the balance card in node mode */
+.balance-indexer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+}
+
+.balance-others {
+  display: flex;
+  flex-direction: column;
+}
+
+/* A token's row: a long amount moves under the name, still right-aligned, instead of squeezing the name */
+.balance-others li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.balance-others li:last-child {
+  padding-bottom: 0;
+}
+
+.balance-sym {
+  font-weight: 600;
+  min-width: 44px;
+}
+
+/* A token's symbol and name, and under them the contract that issued it: at most 60% of the row, so that a long name never pushes the
+   amount down by itself */
+.token-asset {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  max-width: 60%;
+}
+
+.token-asset-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.balance-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The warning under a token named like a native coin takes the row's width */
+.balance-warn {
+  flex-basis: 100%;
+}
+
+/* The amount, with the BTC-final part under it while some of it is not final; on a line of its own it may break after a group of digits,
+   as a last resort, its unit kept after the last group */
+.balance-token-amount {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+  max-width: 100%;
+  margin-left: auto;
+}
+
+.balance-token-amount .amount {
+  display: block;
+  text-align: right;
+  white-space: normal;
+}
+
+.balance-token-amount .amount wbr {
+  display: inline;
+}
+
+/* The assets nobody asked for (D-123), folded under the list: each with its ID and a button that keeps it */
+.balance-folded {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.balance-folded summary {
+  cursor: pointer;
+  font-size: var(--fs-small);
+  color: var(--ink-3);
+  width: fit-content;
+}
+
+@media (hover: hover) {
+  .balance-folded summary:hover {
+    color: var(--ink);
+  }
+}
+
+/* The BTC card's refresh button: no taller than the card's label, and turning while it reads */
+.balance-refresh {
+  margin: -6px -8px -6px 0;
+}
+
+/* Busy, it stays clear (not faded like a disabled button) so that the turning shows */
+.balance-refresh.is-busy {
+  opacity: 1;
+  cursor: progress;
+}
+
+.balance-refresh.is-busy svg {
+  animation: balance-turn 0.9s linear infinite;
+}
+
+@keyframes balance-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.unfinal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--qing);
+}
+
+.split {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.split-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--mark-empty);
+  gap: 2px;
+}
+
+.split-final {
+  background: var(--zhu);
+  border-radius: 3px 0 0 3px;
+  transition: width var(--dur) var(--ease-out);
+}
+
+.split-fast {
+  background: var(--qing);
+  border-radius: 0 3px 3px 0;
+  transition: width var(--dur) var(--ease-out);
+}
+
+.split-out-bar {
+  background: repeating-linear-gradient(135deg, transparent 0 3px, color-mix(in oklab, var(--ink-3) 45%, transparent) 3px 4px);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  border-radius: 0 3px 3px 0;
+}
+
+.split-eq {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  font-size: var(--fs-small);
+  max-width: 460px;
+}
+
+.split-eq-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.split-eq-row dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+}
+
+.split-eq-row dd {
+  margin: 0;
+  text-align: right;
+}
+
+.split-eq-total {
+  border-top: 1px solid var(--line-strong);
+  padding-top: 4px;
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+.split-eq-total dt {
+  color: var(--ink);
+}
+
+.split-plus {
+  color: var(--qing);
+}
+
+.split-minus {
+  color: var(--ink-2);
+}
+
+.split-out-mark {
+  display: inline-block;
+  width: 11px;
+  height: 7px;
+  border-radius: 1px;
+  background: repeating-linear-gradient(135deg, transparent 0 2px, var(--ink-3) 2px 3px);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.split-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 24px;
+  font-size: var(--fs-small);
+}
+
+.split-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* A sentence of several lines: its mark stays by the first */
+.split-item--note {
+  align-items: flex-start;
+}
+
+.split-item--note > :first-child {
+  flex: none;
+  margin-top: 0.3em;
+}
+
+.split-note {
+  margin: 0;
+  max-width: 460px;
+}
+
+/* BTC outputs waiting for their first confirmation, on a line of their own under those the wallet spends, and what the outputs are
+   short of: a paragraph's wrapping, without a lone last word or Chinese character */
+.coins-waiting {
+  display: block;
+  margin-top: 2px;
+  text-wrap-style: pretty;
+}
+
+.inflight {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line-strong);
+}
+
+/* An operation on its way: its summary and when it will be final on one line, its steps across the row under them. In the row's
+   middle, between the two, a step had 61 to 97 px, and the widest word of a step's name ran into the next one's: "confirmaciones" by
+   up to 28 px in Spanish, "confirmations" by up to 18 in English */
+.inflight-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'what eta'
+    'track track';
+  align-items: baseline;
+  gap: 10px var(--sp-4);
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+/* The path's badge keeps to its summary's first line, as in a list's cell */
+.inflight-what {
+  grid-area: what;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  font-size: var(--fs-small);
+}
+
+.inflight-track {
+  grid-area: track;
+}
+
+.inflight-eta {
+  grid-area: eta;
+  text-align: right;
+}
+
+/* On a phone the steps keep to their marks, and when it will be final goes under them */
+@media (max-width: 720px) {
+  .inflight-row {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'what'
+      'track'
+      'eta';
+    gap: 8px;
+  }
+
+  .inflight-eta {
+    text-align: left;
+  }
+}
+
+.utxo-state {
+  font-size: var(--fs-small);
+  white-space: nowrap;
+}
+
+.utxo-state--available {
+  color: var(--ink);
+}
+
+.utxo-state--reserved {
+  color: var(--qing);
+}
+
+.utxo-state--unconfirmed,
+.utxo-state--spent {
+  color: var(--ink-3);
+}
+
+.threshold {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-affix {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.input-affix .input {
+  padding-right: 92px;
+}
+
+.input-suffix {
+  position: absolute;
+  right: 12px;
+  font-size: var(--fs-small);
+  color: var(--ink-3);
+  pointer-events: none;
+}
+
+.threshold .input-affix .input {
+  padding-right: 48px;
+}
+
+/* An amount's end: its Max or All button, then its unit, as wide as an asset's symbol needs; the field's text keeps clear of it
+   (keepClear in components/ui.tsx) */
+.input-end {
+  position: absolute;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 70%;
+}
+
+.input-end .input-suffix {
+  position: static;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.input-max {
+  position: relative;
+  flex: none;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: var(--fs-label);
+}
+
+/* Until the balance is known there is no maximum to fill in */
+.input-max:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (hover: hover) {
+  .input-max:not(:disabled):hover {
+    color: var(--ink);
+    border-color: var(--line-strong);
+  }
+}
+
+/* ================= Send ================= */
+
+.send-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--sp-6);
+  align-items: start;
+}
+
+@media (max-width: 980px) {
+  .send-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.send-grid .section-head .eyebrow {
+  font-family: var(--font-mono);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: var(--sp-4);
+}
+
+.field--wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 720px) {
+  .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.field-msg {
+  min-height: 1.5em;
+  line-height: 1.5;
+}
+
+.field-warn {
+  color: var(--warn);
+}
+
+.recipient-label {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.input-recipient {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-recipient .acct-seal,
+.input-recipient-blank {
+  position: absolute;
+  left: 10px;
+}
+
+.input-recipient-blank {
+  width: 20px;
+  height: 20px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 3px;
+}
+
+.input-recipient .input {
+  padding-left: 40px;
+  font-size: 13px;
+}
+
+.paths {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+@media (max-width: 860px) {
+  .paths {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.path-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: var(--sp-4);
+  text-align: left;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  color: inherit;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast), background var(--dur-fast);
+}
+
+@media (hover: hover) {
+  .path-card:hover {
+    border-color: var(--ink-3);
+  }
+}
+
+.path-card--on {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 1px var(--ink);
+}
+
+.path-card--off {
+  cursor: not-allowed;
+  background: var(--surface-2);
+}
+
+.path-card--off > :not(.path-card-reason) {
+  opacity: 0.5;
+}
+
+.path-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.path-card-name {
+  font-weight: 600;
+  font-size: var(--fs-small);
+}
+
+.path-card-radio {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-strong);
+  color: var(--on-ink);
+}
+
+.path-card--on .path-card-radio {
+  border-color: var(--ink);
+  background: var(--ink);
+}
+
+.path-card-fee {
+  margin-top: 4px;
+}
+
+.path-card-sub {
+  font-size: var(--fs-label);
+  color: var(--ink-3);
+}
+
+.path-card-speed {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-small);
+  color: var(--ink);
+  margin-top: 2px;
+}
+
+.path-card-reason {
+  font-size: var(--fs-label);
+  color: var(--danger);
+  font-weight: 500;
+}
+
+.path-card-warn {
+  font-size: var(--fs-label);
+  color: var(--warn);
+}
+
+.path-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border-radius: var(--r-panel);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+
+.path-detail p + p {
+  margin-top: 6px;
+}
+
+.fee-break {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--ink-2);
+}
+
+.fee-break > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.levels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.level {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-ctl);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+}
+
+.level--on {
+  border-color: var(--ink);
+  color: var(--ink);
+  box-shadow: 0 0 0 1px var(--ink);
+}
+
+/* Recently sent-to accounts: listed for picking while the recipient field is empty */
+.recent-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin-top: 6px;
+}
+
+.recent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px 0 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .recent-chip:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+}
+
+/* The verify page's protocol parameters: a reference, folded on a phone (Verify.tsx) */
+.params-all summary {
+  cursor: pointer;
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+  width: fit-content;
+  padding: 4px 0;
+}
+
+.params-all[open] summary {
+  margin-bottom: var(--sp-3);
+}
+
+@media (hover: hover) {
+  .params-all summary:hover {
+    color: var(--ink);
+  }
+}
+
+/* On a phone a parameter's note is the card's last line, its whole width: beside its label it had two thirds of it, and at 320 px
+   ended on "ANCHOR_DEPTH" alone in English, Spanish and Chinese, and in Japanese on the two last kana of a word */
+@media (max-width: 720px) {
+  .table td.param-note {
+    flex-basis: 100%;
+  }
+}
+
+.advanced {
+  border-top: 1px solid var(--line);
+  padding-top: var(--sp-3);
+}
+
+.advanced summary {
+  cursor: pointer;
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+  margin-bottom: var(--sp-3);
+  width: fit-content;
+}
+
+.send-summary {
+  position: sticky;
+  top: calc(var(--topbar-h) + 16px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+}
+
+.summary-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-synthesis: none;
+  font-size: var(--fs-lead);
+  letter-spacing: 0.08em;
+}
+
+/* The label column holds each label's longest word whole in every language, and a count with its noun: "6 confirmaciones" (106 px)
+   is the widest. In 76 px "6 BTC confirmations" broke inside its last word ("confirmatio" / "ns"); beside it a value keeps 170 px,
+   of which the widest, an amount with eight decimals, takes 161 */
+.send-summary .spec-row {
+  grid-template-columns: 108px minmax(0, 1fr);
+  gap: var(--sp-3);
+  padding: 9px 0;
+}
+
+/* Below 364 px, where that amount would run past its column (at 363 px, of 161, by a fifth of a pixel), a label goes above its value,
+   which takes the summary's whole width; the bound takes a zoomed window's fractional widths as well (363.5 px in Safari or Firefox) */
+@media (max-width: 363.98px) {
+  .send-summary .spec-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+  }
+}
+
+/* A label takes the narrow column in two lines broken between its words, also in Chinese and Japanese, where any two characters
+   may part (six confirmations broke between the count's measure word and its noun, the recipient's account inside its katakana);
+   a word too long for the column still breaks rather than overflow */
+.send-summary .spec-label {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.summary-cta {
+  width: 100%;
+}
+
+.summary-hint {
+  text-align: center;
+}
+
+@media (max-width: 980px) {
+  .send-summary {
+    position: static;
+  }
+
+  /* The bar at the end of the form holds the button here, and says what the operation still needs: the summary below it only sums up,
+     rather than repeat the button and the hint a screen further down */
+  .summary-cta,
+  .summary-hint {
+    display: none;
+  }
+}
+
+.review {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.review-lead {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  font-size: 20px;
+}
+
+.review-verb {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-synthesis: none;
+}
+
+.review-signer {
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--line);
+}
+
+/* A contract's asset or a token in the review: its whole ID (D-123) */
+.review-asset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.review-h {
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--ink-2);
+  margin-top: var(--sp-2);
+  letter-spacing: 0.04em;
+}
+
+.checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  padding: 8px 0;
+  font-size: var(--fs-label);
+  color: var(--ink-2);
+}
+
+.checks li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.checks svg {
+  color: var(--ink-3);
+}
+
+.warns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: var(--r-ctl);
+  background: var(--warn-soft);
+  border: 1px solid color-mix(in oklab, var(--warn) 30%, transparent);
+  font-size: var(--fs-small);
+  color: var(--ink);
+}
+
+.warns li {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+}
+
+.warns svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--warn);
+}
+
+.review-money {
+  padding: 10px 12px;
+  border-radius: var(--r-ctl);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+
+.review-raw summary {
+  cursor: pointer;
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+  width: fit-content;
+  padding: 4px 0;
+}
+
+.link-btn {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font: inherit;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.path-card-speed--warn {
+  color: var(--warn);
+}
+
+/* Phones: the send button sticks just above the bottom navigation, so there is no need to scroll through the whole form */
+.send-sticky {
+  display: none;
+}
+
+/* While the focus is on what the bar holds, the room the root keeps below (components.css) leaves out the bar itself (`--foot-bar`):
+   pinned, it is in view wherever the page stands, and a scroll to it would only move the page under it. The rule outweighs that room's
+   by a class, whatever their order */
+html:has(.send-sticky :focus) {
+  scroll-padding-bottom: 12px;
+}
+
+@media (max-width: 980px) {
+  .send-sticky {
+    position: sticky;
+    bottom: 12px;
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: 10px 12px;
+    border-radius: var(--r-panel);
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    box-shadow: var(--shadow-pop);
+  }
+}
+
+@media (max-width: 860px) {
+  .send-sticky {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  html:has(.send-sticky :focus) {
+    scroll-padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* A phone held sideways: the bar stays at the end of the form rather than cover a fifth of the short screen over the fields */
+@media (max-height: 480px) and (pointer: coarse) {
+  .send-sticky {
+    position: static;
+    box-shadow: none;
+  }
+}
+
+/*
+ * The text takes the room the button leaves, and never less than its widest figure: a figure wider than that room (a long amount
+ * on a 320 px phone) puts the button on a row of its own below instead of running under it
+ */
+.send-sticky-fee {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: min-content;
+}
+
+/* The amount beside the path, then the fee: each figure and label whole, a line too long for the bar breaking between them */
+.send-sticky-line {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 6px;
+}
+
+.send-sticky-line > * {
+  white-space: nowrap;
+}
+
+/* A label longer than the room breaks between its words only ("Comisión de patrocinio" on a 320 px phone) */
+.send-sticky-line > .send-sticky-label {
+  white-space: normal;
+  word-break: keep-all;
+}
+
+.send-sticky .btn {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.signing {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.signing .enso-mark {
+  animation: spin 1.1s linear infinite;
+}
+
+.signing .enso-mark path {
+  fill: currentColor;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.modal-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+}
+
+.sent-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sent-title--warn {
+  color: var(--warn);
+}
+
+/* ================= Receive ================= */
+
+.receive-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-5);
+  padding: var(--sp-5);
+  align-items: start;
+}
+
+.receive-tabs {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+@media (max-width: 720px) {
+  .receive-card {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+}
+
+.qr {
+  border-radius: var(--r-ctl);
+  max-width: 100%;
+  height: auto;
+}
+
+.qr-bg {
+  fill: #ffffff;
+}
+
+.qr-fg {
+  fill: #16201f;
+}
+
+.receive-addr {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+  width: 100%;
+}
+
+/* The groups stand apart by a space drawn before each, as a full hash's do (.full-hash-groups): an address selected by hand copies as one
+   string, as a wallet takes it, where each group copied as a line of its own */
+.addr-groups {
+  font-size: 17px;
+  /* The 2 px the rows had between them */
+  line-height: calc(1.6em + 2px);
+  letter-spacing: 0.02em;
+  /* The groups stood 8 px apart: a monospace space is 0.6 em wide, and the letter spacing follows it */
+  word-spacing: calc(8px - 0.62em);
+}
+
+.addr-groups > span + span::before {
+  content: ' ';
+}
+
+.addr-groups > span:nth-child(even) {
+  color: var(--ink-2);
+}
+
+.addr-groups .addr-edge {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--ink-3);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+
+.toggle-key {
+  background: none;
+  border: 0;
+  padding: 0;
+  width: fit-content;
+}
+
+.key-hex {
+  overflow-wrap: anywhere;
+  color: var(--ink-2);
+}
+
+/* The account in hex under its label, with the copy button beside it rather than on a line of its own */
+.receive-hex {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.receive-rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.rule {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 10px;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+}
+
+.rule-title {
+  font-weight: 600;
+  font-size: var(--fs-small);
+}
+
+.incoming {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line-strong);
+}
+
+.incoming li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.incoming-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.incoming-amount {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  font-family: var(--font-mono);
+  width: fit-content;
+}
+
+@media (hover: hover) {
+  .incoming-amount:hover .amount-int {
+    color: var(--qing);
+  }
+}
+
+.incoming-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+@media (max-width: 560px) {
+  .incoming li {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .incoming-status {
+    grid-column: 2;
+    align-items: flex-start;
+  }
+}
+
+.step-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.step-no {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--r-seal);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.step-no--inv {
+  border-color: var(--on-ink);
+  color: var(--on-ink);
+}
+
+.path-card-title {
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+  margin-top: -2px;
+}
+
+.addr-hrp {
+  color: var(--ink-3);
+}
+
+/* ================= Top up ================= */
+
+/*
+ * The simulator's locks for the connected wallet, a button each: the lock's number, its terms (amount and price) and its state
+ * apart, the state at the row's end, and the lock loaded marked as a path card is. They had no style of their own and were the
+ * browser's buttons, their parts run together: lock #1 of 2,000 KSA read "#12,000 KSA0.0025 KSA / satOpen". Where a row is too
+ * narrow for its terms (in Spanish at 320 px), the price goes under the amount and the state keeps its place
+ */
+.lock-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lock-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 12px;
+  width: 100%;
+  padding: 9px 12px;
+  text-align: left;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-ctl);
+  background: var(--surface);
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+
+@media (hover: hover) {
+  .lock-row:hover {
+    border-color: var(--ink-3);
+  }
+}
+
+.lock-row--active {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 1px var(--ink);
+}
+
+.lock-row-terms {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+}
+
+/* ================= QA fixes ================= */
+
+/* Touch targets no smaller than 40px */
+@media (max-width: 860px) {
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .icon-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .net-chip {
+    height: 36px;
+  }
+
+  .wallet-chip {
+    height: 40px;
+  }
+}
+
+.console-group > .btn,
+.drawer-body > .btn {
+  align-self: flex-start;
+}
+
+/* Top bar tools must not be squeezed; secondary elements are collapsed on phones. The row an icon button is drawn as here replaces
+   its own grid (components.css), and centres its icon along the row as the grid did: the search icon had stood at the start of its
+   button, 4 px left of its middle on a phone */
+.topbar-tools > .icon-btn,
+.topbar-tools > .wallet-chip,
+.topbar-tools > .btn,
+.theme-top {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The language menu and the theme switch sit together; the wallet button and the wallet chip keep their own gaps between an icon and
+   its words (components.css), where this rule once gave them 2 px */
+.theme-top {
+  gap: 2px;
+}
+
+/* The network chip keeps its own gap: its dot's halo needs the room */
+.topbar-tools > .net-chip {
+  flex-shrink: 0;
+}
+
+.topbar-brand {
+  flex: none;
+}
+
+/* The search box's icon, which opens the search sheet, where the box itself is folded away (a phone, a narrow desktop window) */
+@media (min-width: 1100px) {
+  .topbar-tools > .search-btn {
+    display: none;
+  }
+}
+
+/*
+ * A narrow desktop window (861–1099 px) keeps the top bar's links and wallet button whole in every language: the search box folds into
+ * its icon, and the network chip's data source, the language menu and the theme switch go (the footer has the last two). The four
+ * links take up to 342 px (Spanish), and with "Conectar billetera" the bar takes 766 of the 813 px a window of 861 gives it; the
+ * contract playground's link joins them from 1 200 px (components.css). Its bounds meet the phone's (at most 860 px) and the wide
+ * window's (from 1 100 px) to a fiftieth of a pixel: Safari and Firefox give a zoomed window widths such as 1 099.5 px, which neither
+ * 1 099 nor 1 100 takes, and there the bar had both its search box and the search icon (Chromium rounds to whole pixels).
+ */
+@media (min-width: 860.02px) and (max-width: 1099.98px) {
+  .topbar .search--md,
+  .net-chip-label,
+  .theme-top {
+    display: none;
+  }
+}
+
+/*
+ * Where the top bar's parts do not fit in a window of any width, as under a reader's own wider letter and word spacing, it folds a step
+ * at a time until they do (`fitTopBar` in app/fit.ts sets `data-fold`): first the contract playground's link goes, then the search box
+ * folds into its icon and the network chip's data source, the language menu and the theme switch go, as in a narrow window, and last the
+ * wallet button keeps to its icon and the wallet's chip to its seal, as on a phone (the button's words in its title and its name)
+ */
+.topbar-inner[data-fold] .nav .out-link {
+  display: none;
+}
+
+.topbar-inner:is([data-fold="2"], [data-fold="3"]) :is(.search--md, .net-chip-label, .theme-top) {
+  display: none;
+}
+
+.topbar-inner:is([data-fold="2"], [data-fold="3"]) .search-btn {
+  display: inline-flex;
+}
+
+.topbar-inner[data-fold="3"] :is(.connect-label, .wallet-chip .amount) {
+  display: none;
+}
+
+/* The wallet's chip, its seal alone, has the same room either side of it, as on a phone (components.css) */
+.topbar-inner[data-fold="3"] .wallet-chip {
+  padding-inline: 10px;
+}
+
+/* A phone's wallet button is its icon alone already, and keeps its 40 px for a finger */
+@media (min-width: 480.02px) {
+  .topbar-inner[data-fold="3"] .connect-btn {
+    width: 30px;
+    padding: 0;
+  }
+}
+
+/*
+ * From 1 100 px the network chip names the data source ("signet · node", "devnet · simulator") and opens the same panel as the status
+ * strip's right end, which a desktop window cut at its edge: the strip, at most the page's 1 240 px, has 1 192 px for its items, and
+ * the node's readings take up to 1 179 of them (Spanish, with five-digit heights; components.css) before the source's 230 or so. The
+ * strip leaves the source to the chip there.
+ */
+@media (min-width: 1100px) {
+  .strip-source {
+    display: none;
+  }
+}
+
+.wordmark-text {
+  white-space: nowrap;
+}
+
+/* When the top bar runs out of space, narrow the search box first rather than squeezing the wordmark */
+.topbar-tools {
+  min-width: 0;
+}
+
+.topbar-tools > .search {
+  flex: 1 1 auto;
+  min-width: 120px;
+}
+
+@media (max-width: 480px) {
+  .connect-label,
+  .theme-top {
+    display: none;
+  }
+
+  .connect-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+  }
+
+  .topbar-inner {
+    gap: 8px;
+  }
+
+  .topbar-tools {
+    gap: 6px;
+  }
+
+  .net-chip {
+    padding: 0 10px;
+  }
+}
+
+.footer-theme {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+/* On a phone the footer's lines start at its left edge: the theme switch follows the language menu, and where it takes a line of its
+   own it starts there too rather than hang at the right edge */
+@media (max-width: 720px) {
+  .footer-theme {
+    margin-left: 0;
+  }
+}
+
+.footer-theme-opt {
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: var(--r-ctl);
+  background: transparent;
+  color: var(--ink-3);
+  font-size: var(--fs-label);
+}
+
+@media (hover: hover) {
+  .footer-theme-opt:hover {
+    color: var(--ink);
+  }
+}
+
+.footer-theme-opt.is-on {
+  border-color: var(--line-strong);
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.strip-item,
+.block-clock,
+.status-mark {
+  flex-shrink: 0;
+}
+
+/* —— Block DAG: parents and merge set —— */
+.parent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* A parent's or a merged block's words stand on one baseline, the label's beside them, and a merged block's mark is centred on them
+   (`.mark-words`): with the row centred, the merged blocks read 2 px above their label */
+.parent-item {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  min-width: 0;
+}
+
+.entry-skipped .op-summary,
+.entry-skipped.op-summary {
+  color: var(--ink-3);
+}
+
+.entry-skipped a {
+  color: var(--ink-3);
+}
+
+.entry-skip-note {
+  display: block;
+  margin-top: 2px;
+  color: var(--warn);
+}
+
+/* ================= Data source settings ================= */
+
+.source-panel .tabs {
+  align-self: flex-start;
+}
+
+.source-status {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 10px;
+  row-gap: 2px;
+  align-items: baseline;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  font-size: var(--fs-small);
+}
+
+.source-status > :not(.net-dot) {
+  grid-column: 2;
+  overflow-wrap: anywhere;
+}
+
+/* An address in the panel, the node's, the indexer's or Bitcoin RPC's, goes whole onto a line of its own where the words before it leave
+   it too little room, as on a phone, and breaks as an address does only where it is longer than the line (WebAddress) */
+.source-address {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.source-status .net-dot {
+  grid-row: 1;
+  /* Level with the first line, the state's, where the node's address takes a line of its own: half a line (the body's 1.6) less half
+     the dot */
+  align-self: start;
+  margin-top: calc(0.8em - 3.5px);
+}
+
+.source-status--live .net-dot {
+  background: var(--qing);
+  box-shadow: 0 0 0 3px var(--qing-soft);
+}
+
+.source-status--connecting .net-dot {
+  background: var(--warn);
+  box-shadow: 0 0 0 3px var(--warn-soft);
+}
+
+.source-status--error {
+  border-color: var(--danger);
+}
+
+.source-status--error .net-dot {
+  background: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-soft);
+}
+
+.source-error {
+  color: var(--danger);
+}
+
+.source-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.console-note--error {
+  background: var(--danger-soft);
+}
+
+/* —— Interface language —— */
+.lang-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-3);
+}
+
+.lang-select-input {
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--line-field);
+  border-radius: var(--r-ctl);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-label);
+}
+
+.lang-select--compact {
+  position: relative;
+  width: auto;
+  min-width: 32px;
+  padding: 0 6px;
+  gap: 4px;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.lang-select--compact .lang-select-code {
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* The select sits over the icon, fully transparent: what you see is the icon, what opens is the system menu */
+.lang-select--compact .lang-select-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.lang-select--compact:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+/* Wallet settings page: one setting per row, label on the left and control on the right; stacked on narrow screens */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.source-panel--bare {
+  border-top: 0;
+  padding-top: 0;
+}
+
+/* The block page's entry figures (skipped, gas, data): each one whole on a line, a narrow screen breaking between them. Each is a box
+   as wide as it reads rather than a run that never breaks, so that one longer than the line, as under a reader's own wider letter and
+   word spacing ("gas 10,000 / límites declarados 10,000" at 320 px), wraps within itself rather than running off the page */
+.entry-sums > span {
+  display: inline-block;
+  max-width: 100%;
+}
+
+/* iOS (Safari, and the WebKit browsers inside wallet apps) zooms the page in on a form field set below 16 px as it takes focus,
+   and leaves it zoomed after: on a phone every field is set at 16 px */
+@media (max-width: 860px) {
+  .input,
+  .input--sm,
+  .input-recipient .input,
+  .lang-select-input {
+    font-size: 16px;
+  }
+}
+
+/* On a touch screen a control drawn smaller than a fingertip takes taps over 40 px around its middle and looks as before: the copy
+   buttons (26 px), the amount's Max and the toggles of folded sections. The tabs, the small buttons and fields and the footer's
+   controls, whose neighbours sit close, are drawn taller instead */
+@media (pointer: coarse) {
+  .copy-btn:not(.copy-btn--labelled),
+  details > summary {
+    position: relative;
+  }
+
+  .copy-btn:not(.copy-btn--labelled)::after,
+  .input-max::after,
+  details > summary::after {
+    content: "";
+    position: absolute;
+    inset: min(0px, (100% - 40px) / 2);
+  }
+
+  .tab,
+  .footer-theme-opt,
+  .lang-select-input {
+    height: 34px;
+  }
+
+  /* No shorter than 36 px, where a button drawn larger keeps its size (the phone's wallet button, square as the search icon beside it) */
+  .btn--sm,
+  .btn--wrap.btn--sm,
+  .copy-btn--labelled,
+  .input--sm {
+    min-height: 36px;
+  }
+
+  /* The BTC card's refresh button, drawn taller, still takes no more height than the card's label */
+  .balance-refresh {
+    margin-block: -9px;
+  }
+}
+
+/* ================= Forced colors ================= */
+
+/* The page's own marks drawn as boxes of colour, kept and drawn in the theme's colours as the components' are (components.css): the
+   overview's bars of block times and its share of pending operations by path, an operation's gas, the dots between the parts of a
+   line, the data source panel's dot and a BTC transaction's state, filled where it is on Bitcoin and grey where it is stuck. The
+   wallet's split keeps its own colours where its key's marks keep theirs, which forced colors leave alone in an SVG: the final
+   balance in vermilion, a fast-confirmed part in qing; its outflow, whose key is a box as well, is grey in the bar and in the key
+   alike. The lock chosen, raised by a shadow, takes an outline; the Verify page's arrowheads, a border's one side whose transparent
+   sides forced colors paint as well, and a menu's arrow, drawn with gradients that forced colors drop, are drawn again */
+@media (forced-colors: active) {
+  .spark,
+  .mix,
+  .gas-bar,
+  .split-bar,
+  .dot-sep {
+    forced-color-adjust: none;
+  }
+
+  .spark i {
+    background: CanvasText;
+  }
+
+  .spark i.spark-long {
+    background: GrayText;
+  }
+
+  .mix-B {
+    border: 1px solid CanvasText;
+    background: Canvas;
+  }
+
+  .mix-C {
+    background: CanvasText;
+  }
+
+  .mix-empty {
+    border: 1px solid GrayText;
+    background: Canvas;
+  }
+
+  .gas-bar,
+  .split-bar {
+    outline: 1px solid CanvasText;
+    background: Canvas;
+  }
+
+  .gas-bar span,
+  .gas-bar span.gas-full {
+    background: CanvasText;
+  }
+
+  .split-out-bar,
+  .split-out-mark {
+    forced-color-adjust: none;
+    background: GrayText;
+    box-shadow: none;
+  }
+
+  .dot-sep {
+    background: CanvasText;
+  }
+
+  .source-status--live .net-dot {
+    background: CanvasText;
+    box-shadow: none;
+  }
+
+  .source-status--connecting .net-dot,
+  .source-status--error .net-dot {
+    border: 1.5px solid CanvasText;
+    background: Canvas;
+    box-shadow: none;
+  }
+
+  .txs--on_btc .txs-dot,
+  .txs--stuck .txs-dot {
+    forced-color-adjust: none;
+    border-color: CanvasText;
+    background: CanvasText;
+  }
+
+  .txs--stuck .txs-dot {
+    background: GrayText;
+  }
+
+  .lock-row--active {
+    outline: 1px solid CanvasText;
+  }
+
+  .vf-arrow::after {
+    forced-color-adjust: none;
+    border-left-color: CanvasText;
+  }
+
+  select.input {
+    appearance: auto;
+  }
+}
+
+/* On a phone the Verify page's arrows point down */
+@media (forced-colors: active) and (max-width: 860px) {
+  .vf-arrow::after {
+    border-left-color: transparent;
+    border-top-color: CanvasText;
+  }
+}

@@ -1,0 +1,91 @@
+import type { Messages } from '..';
+
+/** Top-up page (pages/wallet/TopUp.tsx) */
+const topup: Messages['topup'] = {
+  title: '충전',
+  one: 'BTC로 KSA 구매: 판매자의 잠금에 지정된 수취 주소로 지불하면 같은 트랜잭션으로 수령합니다.',
+  nav: '충전',
+
+  lock: {
+    section: '잠금',
+    mine: '나에게 온 잠금',
+    none: '아직 나에게 온 잠금이 없습니다. 판매자가 먼저 교환 컨트랙트에서 내 계정 앞으로 KSA를 잠가야 합니다.',
+    exchange: '교환 컨트랙트',
+    exchangePlaceholder: '64자리 16진수 컨트랙트 ID',
+    id: '잠금 번호',
+    load: '읽기',
+    loading: '읽는 중…',
+    notFound: '이 잠금을 읽을 수 없습니다: 컨트랙트 ID나 번호가 틀렸거나 교환 컨트랙트가 아닙니다',
+    readFailed: (why: string) => `잠금을 읽지 못했습니다. ${why}`,
+    badExchange: '컨트랙트 ID는 64자리 16진수여야 합니다',
+    badId: '번호는 0 이상의 정수여야 합니다',
+    seller: '판매자',
+    beneficiary: '수익 계정',
+    notYours: '이 잠금의 수익 계정은 내가 아닙니다: 지불하면 KSA가 다른 사람에게 기록됩니다',
+    price: '가격',
+    perSat: (ksa: string) => `${ksa}\u00a0KSA / sat`,
+    ksa: '잠긴 KSA',
+    payTo: '수취 주소',
+    expiry: '만료',
+    blocksLeft: (n: number, h: string) => `BTC 블록 ${n}개 남음 (높이 ${h})`,
+    expired: (h: string) => `만료됨 (높이 ${h})`,
+    state: { Open: '열림', Claimed: '수령됨', Released: '해제됨' },
+    claimed: (paid: string, ksa: string) => `구매자가 ${paid}\u00a0sats를 지불하고 ${ksa}\u00a0KSA를 받았습니다`,
+  },
+
+  pay: {
+    section: '지불',
+    /** The payment column before a lock is loaded */
+    needLock: '먼저 잠금을 읽어 오세요',
+    needLockHint: '판매자가 교환 컨트랙트에서 내 앞으로 KSA를 잠그면 컨트랙트 ID와 잠금 번호를 알려 줍니다. 입력하고 읽어 오면 여기서 BTC를 지불합니다.',
+    amount: '지불 금액',
+    all: '전부',
+    forAll: (sats: string) => `잠긴 KSA를 전부 받으려면 ${sats}\u00a0sats`,
+    get: '받을 KSA',
+    partial: '적게 지불하면 해당하는 KSA만 받고, 나머지는 결제되거나 만료 후 판매자가 해제할 때까지 잠긴 채로 남습니다',
+    over: (sats: string) => `${sats}\u00a0sats를 넘는 금액으로는 더 받을 수 없습니다`,
+    positive: '금액은 0보다 커야 합니다',
+    tooLate: '만료가 너무 가깝습니다: 판매자가 해제하기 전에 포함되지 않을 수 있습니다',
+    nearExpiry: (n: number) => `만료까지 BTC 블록 ${n}개`,
+    minerFee: '채굴 수수료',
+    rate: (rate: string) => `${rate}\u00a0sat/vB`,
+    utxo: {
+      label: 'BTC 출력',
+      source: { btc_rpc: '비트코인 RPC에서', unisat: '지갑에서', manual: '직접 입력' },
+      available: (sats: string, n: number) => `사용 가능 ${sats}\u00a0sats (출력 ${n}개)`,
+      unconfirmed: (sats: string, n: number) => `미확인: ${sats}\u00a0sats (출력 ${n}개), BTC 블록에 포함되면 사용할 수 있습니다`,
+      short: (sats: string) => `BTC가 부족합니다. 이 결제에는 채굴 수수료를 포함해 최소 ${sats}\u00a0sats가 필요합니다. 금액을 줄이거나 주소에 BTC를 추가하세요`,
+      none: '사용할 수 있는 출력이 없습니다',
+      manualLabel: '출력 직접 입력',
+      manualPlaceholder: 'txid:vout:sats, 한 줄에 하나',
+      manualHint: '비트코인 RPC도 지갑의 UTXO 인터페이스도 연결되지 않았을 때 입력합니다',
+      loading: '출력 읽는 중…',
+    },
+    submit: '서명하고 브로드캐스트',
+    submitSim: '지불하고 수령',
+    signing: '서명 중…',
+    disconnected: '먼저 지갑을 연결하세요',
+    how: '지갑은 BTC 트랜잭션의 입력에만 서명합니다. 수령 작업은 첫 입력에 결합된 일회용 키로 서명됩니다.',
+  },
+
+  sent: {
+    title: '지불 트랜잭션을 브로드캐스트했습니다',
+    titleSim: '지불했습니다',
+    then: (n: number) => `BTC ${n}회 확인 후 강제 포함되고 KSA가 내 계정에 기록됩니다`,
+    tx: 'BTC 트랜잭션',
+    claim: '수령 작업',
+    payBy: (h: string) => `BTC 높이 ${h} 전에 확인되어야 합니다`,
+    manual: '브로드캐스트 경로가 없습니다. 이 트랜잭션을 직접 브로드캐스트하세요:',
+    copyRaw: '원시 트랜잭션 복사',
+    ksa: (ksa: string) => `${ksa}\u00a0KSA를 받습니다`,
+    another: '다시 충전',
+    back: '지갑으로 돌아가기',
+  },
+
+  error: {
+    failed: (detail: string) => `충전 실패: ${detail}`,
+    rejected: (detail: string) => `지갑이 서명을 거부했습니다: ${detail}`,
+  },
+};
+
+export default topup;

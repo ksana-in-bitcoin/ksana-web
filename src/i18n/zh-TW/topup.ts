@@ -1,0 +1,91 @@
+import type { Messages } from '..';
+
+/** Top-up page (pages/wallet/TopUp.tsx) */
+const topup: Messages['topup'] = {
+  title: '充值',
+  one: '用 BTC 換 KSA：向賣方鎖定的收款地址付款，同一筆交易領取。',
+  nav: '充值',
+
+  lock: {
+    section: '鎖定',
+    mine: '給你的鎖定',
+    none: '還沒有給你的鎖定。賣方要先在兌換合約上為你的帳戶鎖定 KSA。',
+    exchange: '兌換合約',
+    exchangePlaceholder: '64 位十六進位合約 ID',
+    id: '鎖定編號',
+    load: '讀取',
+    loading: '讀取中…',
+    notFound: '讀不到這個鎖定：合約 ID 或編號有誤，或者合約不是兌換合約',
+    readFailed: (why: string) => `讀取鎖定失敗。${why}`,
+    badExchange: '合約 ID 要是 64 位十六進位',
+    badId: '編號要是非負整數',
+    seller: '賣方',
+    beneficiary: '受益帳戶',
+    notYours: '這個鎖定的受益帳戶不是你：付款會把 KSA 記給別人',
+    price: '價格',
+    perSat: (ksa: string) => `${ksa}\u00a0KSA / 聰`,
+    ksa: '鎖定的 KSA',
+    payTo: '收款地址',
+    expiry: '到期',
+    blocksLeft: (n: number, h: string) => `還剩 ${n} 個 BTC 塊（高度 ${h}）`,
+    expired: (h: string) => `已到期（高度 ${h}）`,
+    state: { Open: '開放', Claimed: '已領取', Released: '已釋放' },
+    claimed: (paid: string, ksa: string) => `買方付了 ${paid}\u00a0聰，領到 ${ksa}\u00a0KSA`,
+  },
+
+  pay: {
+    section: '付款',
+    /** The payment column before a lock is loaded */
+    needLock: '先讀取一個鎖定',
+    needLockHint: '賣方在兌換合約上為你鎖定 KSA 後，會告訴你合約 ID 和鎖定編號。填好、讀取之後，就在這裡付 BTC。',
+    amount: '付款金額',
+    all: '全部',
+    forAll: (sats: string) => `拿到全部鎖定的 KSA 要 ${sats}\u00a0聰`,
+    get: '可換到',
+    partial: '少付只換到對應的 KSA，其餘繼續為你鎖定，直到付清或到期後賣方釋放',
+    over: (sats: string) => `多於 ${sats}\u00a0聰的部分換不到更多`,
+    positive: '金額需要大於 0',
+    tooLate: '離到期不足，付款可能來不及在賣方釋放前被收錄',
+    nearExpiry: (n: number) => `離到期只剩 ${n} 個 BTC 塊`,
+    minerFee: '礦工費',
+    rate: (rate: string) => `${rate}\u00a0sat/vB`,
+    utxo: {
+      label: 'BTC 輸出',
+      source: { btc_rpc: '來自比特幣 RPC', unisat: '來自錢包', manual: '手動填寫' },
+      available: (sats: string, n: number) => `可用 ${sats}\u00a0聰（${n} 個輸出）`,
+      unconfirmed: (sats: string, n: number) => `尚未確認：${sats}\u00a0聰（${n} 個輸出），進入 BTC 區塊後即可使用`,
+      short: (sats: string) => `BTC 不夠：這筆付款連同礦工費至少需要 ${sats}\u00a0聰。請少付一些，或往你的地址裡加 BTC`,
+      none: '沒有可用的輸出',
+      manualLabel: '手動填寫輸出',
+      manualPlaceholder: 'txid:vout:聰，每行一個',
+      manualHint: '沒有接比特幣 RPC 或錢包的 UTXO 介面時填寫',
+      loading: '讀取輸出…',
+    },
+    submit: '簽名並廣播',
+    submitSim: '付款並領取',
+    signing: '簽名中…',
+    disconnected: '先連接錢包',
+    how: '錢包只簽 BTC 交易的輸入；領取操作由一次性密鑰簽名，綁定這筆交易的第一個輸入。',
+  },
+
+  sent: {
+    title: '已廣播付款交易',
+    titleSim: '已付款',
+    then: (n: number) => `${n} 個 BTC 確認後被強制收錄，KSA 記入你的帳戶`,
+    tx: 'BTC 交易',
+    claim: '領取操作',
+    payBy: (h: string) => `最晚應在 BTC 高度 ${h} 前確認`,
+    manual: '沒有可用的廣播途徑，請自行廣播這筆交易：',
+    copyRaw: '複製原始交易',
+    ksa: (ksa: string) => `將換到 ${ksa}\u00a0KSA`,
+    another: '再充一筆',
+    back: '回到錢包',
+  },
+
+  error: {
+    failed: (detail: string) => `充值失敗：${detail}`,
+    rejected: (detail: string) => `錢包拒絕了簽名：${detail}`,
+  },
+};
+
+export default topup;

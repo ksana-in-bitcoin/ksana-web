@@ -1,0 +1,41 @@
+name: ci
+
+# The web wallet and block explorer (D-064). The page uses the TypeScript SDK of the core submodule (file:core/sdk/ts), so
+# the submodule is checked out and the SDK built first.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: web
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            core/sdk/ts/package-lock.json
+            package-lock.json
+      - name: Build the TypeScript SDK
+        working-directory: core/sdk/ts
+        run: |
+          npm ci
+          npm run build
+      - name: Install
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Build
+        run: |
+          npm run build
+          npm run build:artifact

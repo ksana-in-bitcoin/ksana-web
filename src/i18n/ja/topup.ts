@@ -1,0 +1,91 @@
+import type { Messages } from '..';
+
+/** Top-up page (pages/wallet/TopUp.tsx) */
+const topup: Messages['topup'] = {
+  title: 'チャージ',
+  one: 'BTC で KSA を買う：売り手のロックに指定された受取アドレスに支払うと、同じトランザクションで受け取ります。',
+  nav: 'チャージ',
+
+  lock: {
+    section: 'ロック',
+    mine: 'あなた宛てのロック',
+    none: 'あなた宛てのロックはまだありません。売り手が先に交換コントラクトであなたのアカウント宛てに KSA をロックする必要があります。',
+    exchange: '交換コントラクト',
+    exchangePlaceholder: '64 桁の 16 進コントラクト ID',
+    id: 'ロック番号',
+    load: '読み込む',
+    loading: '読み込み中…',
+    notFound: 'このロックを読み取れません：コントラクト ID か番号が誤っているか、交換コントラクトではありません',
+    readFailed: (why: string) => `ロックを読み取れませんでした。${why}`,
+    badExchange: 'コントラクト ID は 64 桁の 16 進数です',
+    badId: '番号は 0 以上の整数です',
+    seller: '売り手',
+    beneficiary: '受取アカウント',
+    notYours: 'このロックの受取アカウントはあなたではありません：支払うと KSA は他人に記録されます',
+    price: '価格',
+    perSat: (ksa: string) => `${ksa}\u00a0KSA / sat`,
+    ksa: 'ロックされた KSA',
+    payTo: '受取アドレス',
+    expiry: '期限',
+    blocksLeft: (n: number, h: string) => `残り ${n} BTC ブロック（高さ ${h}）`,
+    expired: (h: string) => `期限切れ（高さ ${h}）`,
+    state: { Open: 'オープン', Claimed: '受取済み', Released: '解放済み' },
+    claimed: (paid: string, ksa: string) => `買い手が ${paid}\u00a0sats を支払い、${ksa}\u00a0KSA を受け取りました`,
+  },
+
+  pay: {
+    section: '支払い',
+    /** The payment column before a lock is loaded */
+    needLock: '先にロックを読み込んでください',
+    needLockHint: '売り手が交換コントラクトであなた宛てに KSA をロックすると、コントラクト ID とロック番号を教えてくれます。入力して読み込めば、ここで BTC を支払えます。',
+    amount: '支払額',
+    all: '全部',
+    forAll: (sats: string) => `ロックされた KSA を全部買うには ${sats}\u00a0sats`,
+    get: '受け取る KSA',
+    partial: '少なく支払うと相当分の KSA だけを受け取り、残りは支払われるか期限後に売り手が解放するまであなたのためにロックされたままです',
+    over: (sats: string) => `${sats}\u00a0sats を超える分では何も買えません`,
+    positive: '金額は 0 より大きくしてください',
+    tooLate: '期限が近すぎます：売り手の解放より先に取り込まれない可能性があります',
+    nearExpiry: (n: number) => `期限まで残り ${n} BTC ブロック`,
+    minerFee: 'マイナー手数料',
+    rate: (rate: string) => `${rate}\u00a0sat/vB`,
+    utxo: {
+      label: 'BTC 出力',
+      source: { btc_rpc: 'ビットコイン RPC から', unisat: 'ウォレットから', manual: '手入力' },
+      available: (sats: string, n: number) => `利用可能 ${sats}\u00a0sats（${n} 個）`,
+      unconfirmed: (sats: string, n: number) => `未承認：${sats}\u00a0sats（${n} 個）、BTC ブロックに入ると使えます`,
+      short: (sats: string) => `BTC が足りません：この支払いにはマイナー手数料込みで最低 ${sats}\u00a0sats 必要です。金額を減らすか、アドレスに BTC を追加してください`,
+      none: '使える出力がありません',
+      manualLabel: '出力を手入力',
+      manualPlaceholder: 'txid:vout:sats、1 行に 1 つ',
+      manualHint: 'ビットコイン RPC もウォレットの UTXO インターフェースも接続していないときに入力します',
+      loading: '出力を読み込み中…',
+    },
+    submit: '署名してブロードキャスト',
+    submitSim: '支払って受け取る',
+    signing: '署名中…',
+    disconnected: 'まずウォレットを接続してください',
+    how: 'ウォレットは BTC トランザクションの入力だけに署名します。受取オペレーションは最初の入力に結び付いた使い捨て鍵で署名されます。',
+  },
+
+  sent: {
+    title: '支払いをブロードキャストしました',
+    titleSim: '支払いました',
+    then: (n: number) => `BTC 承認 ${n} 回で強制取り込みされ、KSA があなたのアカウントに記録されます`,
+    tx: 'BTC トランザクション',
+    claim: '受取オペレーション',
+    payBy: (h: string) => `BTC 高さ ${h} より前に承認される必要があります`,
+    manual: 'ブロードキャストの手段がありません。このトランザクションを自分でブロードキャストしてください：',
+    copyRaw: '生トランザクションをコピー',
+    ksa: (ksa: string) => `${ksa}\u00a0KSA を受け取ります`,
+    another: 'もう一度チャージ',
+    back: 'ウォレットへ戻る',
+  },
+
+  error: {
+    failed: (detail: string) => `チャージに失敗しました：${detail}`,
+    rejected: (detail: string) => `ウォレットが署名を拒否しました：${detail}`,
+  },
+};
+
+export default topup;

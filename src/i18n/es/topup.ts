@@ -1,0 +1,91 @@
+import type { Messages } from '..';
+
+/** Top-up page (pages/wallet/TopUp.tsx) */
+const topup: Messages['topup'] = {
+  title: 'Recargar',
+  one: 'Compra KSA con BTC: paga a la dirección de cobro del bloqueo de un vendedor, y la misma transacción reclama los KSA bloqueados.',
+  nav: 'Recargar',
+
+  lock: {
+    section: 'Bloqueo',
+    mine: 'Bloqueos para ti',
+    none: 'Aún no hay ningún bloqueo para ti. Un vendedor debe bloquear antes KSA para tu cuenta en el contrato de intercambio.',
+    exchange: 'Contrato de intercambio',
+    exchangePlaceholder: 'ID de 64 dígitos hexadecimales',
+    id: 'Número de bloqueo',
+    load: 'Cargar',
+    loading: 'Cargando…',
+    notFound: 'No se puede leer este bloqueo: el ID del contrato o el número son incorrectos, o el contrato no es un intercambio',
+    readFailed: (why: string) => `No se pudo leer el bloqueo. ${why}`,
+    badExchange: 'El ID del contrato debe tener 64 dígitos hexadecimales',
+    badId: 'El número debe ser un entero no negativo',
+    seller: 'Vendedor',
+    beneficiary: 'Beneficiario',
+    notYours: 'El beneficiario de este bloqueo no eres tú: al pagar, los KSA se acreditarían a otra persona',
+    price: 'Precio',
+    perSat: (ksa: string) => `${ksa}\u00a0KSA / sat`,
+    ksa: 'KSA bloqueados',
+    payTo: 'Dirección de cobro',
+    expiry: 'Vencimiento',
+    blocksLeft: (n: number, h: string) => `${n} ${n === 1 ? 'bloque' : 'bloques'} de BTC restantes (altura ${h})`,
+    expired: (h: string) => `Vencido (altura ${h})`,
+    state: { Open: 'Abierto', Claimed: 'Reclamado', Released: 'Liberado' },
+    claimed: (paid: string, ksa: string) => `El comprador pagó ${paid}\u00a0sats y recibió ${ksa}\u00a0KSA`,
+  },
+
+  pay: {
+    section: 'Pago',
+    /** The payment column before a lock is loaded */
+    needLock: 'Carga primero un bloqueo',
+    needLockHint: 'Cuando un vendedor bloquea KSA para ti en un contrato de intercambio, te da el ID del contrato y el número de bloqueo. Introdúcelos y cárgalos; luego paga aquí los BTC.',
+    amount: 'Importe a pagar',
+    all: 'Todo',
+    forAll: (sats: string) => `${sats}\u00a0sats compran todos los KSA bloqueados`,
+    get: 'Recibes',
+    partial: 'Pagar menos compra solo los KSA correspondientes; el resto sigue bloqueado para ti hasta que se pague o el vendedor lo libere tras el vencimiento',
+    over: (sats: string) => `Lo que supere ${sats}\u00a0sats no compra nada más`,
+    positive: 'El importe debe ser mayor que 0',
+    tooLate: 'Demasiado cerca del vencimiento: el pago podría no incluirse antes de que el vendedor pueda liberar el bloqueo',
+    nearExpiry: (n: number) => `Solo ${n} ${n === 1 ? 'bloque' : 'bloques'} de BTC hasta el vencimiento`,
+    minerFee: 'Comisión de minería',
+    rate: (rate: string) => `${rate}\u00a0sat/vB`,
+    utxo: {
+      label: 'Salidas de BTC',
+      source: { btc_rpc: 'del RPC de Bitcoin', unisat: 'de la billetera', manual: 'introducidas a mano' },
+      available: (sats: string, n: number) => `${sats}\u00a0sats disponibles (${n} ${n === 1 ? 'salida' : 'salidas'})`,
+      unconfirmed: (sats: string, n: number) => `Aún sin confirmar: ${sats}\u00a0sats (${n} ${n === 1 ? 'salida' : 'salidas'}), utilizables cuando un bloque BTC ${n === 1 ? 'la incluya' : 'las incluya'}`,
+      short: (sats: string) => `BTC insuficiente: este pago y su comisión de minería necesitan al menos ${sats}\u00a0sats. Paga menos o añade BTC a tu dirección`,
+      none: 'No hay salidas gastables',
+      manualLabel: 'Introducir salidas a mano',
+      manualPlaceholder: 'txid:vout:sats, una por línea',
+      manualHint: 'Úsalo cuando no hay RPC de Bitcoin ni interfaz de UTXO en la billetera',
+      loading: 'Cargando salidas…',
+    },
+    submit: 'Firmar y difundir',
+    submitSim: 'Pagar y reclamar',
+    signing: 'Firmando…',
+    disconnected: 'Conecta primero una billetera',
+    how: 'La billetera firma solo las entradas de la transacción de BTC; la reclamación se firma con una clave de un solo uso ligada a la primera entrada.',
+  },
+
+  sent: {
+    title: 'Pago difundido',
+    titleSim: 'Pagado',
+    then: (n: number) => `Inclusión forzada tras ${n} ${n === 1 ? 'confirmación' : 'confirmaciones'} de BTC; después los KSA se acreditan en tu cuenta`,
+    tx: 'Transacción de BTC',
+    claim: 'Operación de reclamación',
+    payBy: (h: string) => `Debería confirmarse antes de la altura de BTC ${h}`,
+    manual: 'No hay vía de difusión disponible. Difunde tú mismo esta transacción:',
+    copyRaw: 'Copiar transacción en bruto',
+    ksa: (ksa: string) => `Compra ${ksa}\u00a0KSA`,
+    another: 'Recargar de nuevo',
+    back: 'Volver a la billetera',
+  },
+
+  error: {
+    failed: (detail: string) => `La recarga falló: ${detail}`,
+    rejected: (detail: string) => `La billetera rechazó la firma: ${detail}`,
+  },
+};
+
+export default topup;

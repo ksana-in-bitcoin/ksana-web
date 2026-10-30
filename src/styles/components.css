@@ -395,6 +395,32 @@ html[data-place='focus'] :focus-within::after {
   color: var(--ink-3);
 }
 
+/* ================= Test network notice ================= */
+
+/* The line under the status strip on every network the page shows: in neutral ink, as information banners are (§2.1), and wrapped where
+   it does not fit rather than scrolled like the strip */
+.testnet-notice {
+  border-bottom: 1px solid var(--line);
+}
+
+.testnet-notice-inner {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 6px var(--gutter);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: var(--fs-label);
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+/* On the first line where the text wraps (a phone in Spanish takes three) */
+.testnet-notice-inner svg {
+  flex: none;
+  margin-top: calc((1.5em - 14px) / 2);
+}
+
 /* ================= Bottom navigation (phones) ================= */
 
 .bottomnav {

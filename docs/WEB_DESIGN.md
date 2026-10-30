@@ -300,6 +300,9 @@ Wallet mode (wallet pages): the strip keeps only Ksana #h · BTC final #h · Dat
   chip names it ("signet · node", "devnet · simulator") and opens the same panel, and the strip leaves it out: there its readings take all its width in some languages, and the
   source was cut at its edge. From 1 240 px, the strip's full width, a node's readings fit in every language with five-digit heights and two-digit ages (Spanish's, the
   longest, 1 179 of 1 192 px, with 12 px either side of an item's rule); below, they scroll.
+- Under the status strip, on every page, in wallet mode too, and on every network, one line in neutral ink says that the test network may start over from a new genesis
+  block at any time, and that balances and contracts do not carry over: every network the page shows is a test network, and the signet restarts from genesis without
+  notice as much as a devnet (the project owner's decision of 2026-10-30). It wraps where it does not fit rather than scroll like the strip (`TestnetNotice` in `src/app/Shell.tsx`).
 - Settlements, BTC transactions and BTC blocks live under "Blocks": the Blocks and Settlements pages have a "Blocks · Settlements" section switch at the top, and Settlements is no longer top-level navigation.
 - On phones the navigation moves to a bottom tab bar (Overview, Blocks, Operations, Verify, Wallet); the status strip is ordered by importance, scrolls horizontally, and fades at the right edge to hint that there is more.
   The bar's five tabs are equal, and each label keeps to one line, as a phone's own tab bar does: a label longer than its tab (Japanese "Operations" and "Explorer", 7

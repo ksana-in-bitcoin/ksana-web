@@ -90,6 +90,8 @@ const shell: Messages['shell'] = {
     body: '頁面已重新讀取節點的鏈，之前的區塊、操作和餘額都不在這條鏈上',
   },
 
+  testnet: '測試網路可能隨時從新的創世區塊重新開始，餘額和合約都不會保留',
+
   console: {
     sim: 'regtest 主控台',
     rpc: '資料來源與節點',

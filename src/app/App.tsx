@@ -9,7 +9,7 @@ import { WebAddress } from '../components/Values';
 import type { SourcePref } from '../chain/source';
 import type { HistoryKey, RpcChain } from '../chain/rpc/chain';
 import { type Messages, useT } from '../i18n';
-import { BottomNav, DevConsole, Footer, OpWatcher, SearchOverlay, StatusStrip, Toaster, TopBar } from './Shell';
+import { BottomNav, DevConsole, Footer, OpWatcher, SearchOverlay, StatusStrip, TestnetNotice, Toaster, TopBar } from './Shell';
 import { Overview, RECENT_OPS } from '../pages/Overview';
 import { Blocks } from '../pages/Blocks';
 import { BlockDetail } from '../pages/BlockDetail';
@@ -243,6 +243,7 @@ export function App() {
       </a>
       <TopBar onOpenSearch={() => setSearchOpen(true)} />
       <StatusStrip />
+      <TestnetNotice />
       <main id="main" className="app-main">
         <Page />
       </main>

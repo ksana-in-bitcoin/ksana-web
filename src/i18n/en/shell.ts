@@ -101,6 +101,9 @@ const shell: Messages['shell'] = {
     body: "The page read the node's chain anew: blocks, operations and balances from before are not on it",
   },
 
+  /** The line under the status strip, on every network the page shows (zh-CN/shell.ts) */
+  testnet: 'The test network may start over from a new genesis block at any time, and balances and contracts do not carry over',
+
   /** Console drawer */
   console: {
     sim: 'regtest console',

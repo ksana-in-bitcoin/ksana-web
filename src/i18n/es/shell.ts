@@ -88,6 +88,8 @@ const shell: Messages['shell'] = {
     body: 'La página volvió a leer la cadena del nodo: los bloques, las operaciones y los saldos de antes no están en ella',
   },
 
+  testnet: 'La red de pruebas puede volver a empezar desde otro bloque génesis en cualquier momento, sin sus saldos ni sus contratos',
+
   console: {
     sim: 'Consola regtest',
     rpc: 'Fuente de datos y nodo',

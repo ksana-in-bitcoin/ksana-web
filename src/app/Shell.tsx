@@ -24,6 +24,7 @@ import {
   IconClose,
   IconExternal,
   IconGrid,
+  IconInfo,
   IconLayers,
   IconMonitor,
   IconMoon,
@@ -363,6 +364,22 @@ export function StatusStrip() {
         )}
         {source}
       </div>
+    </div>
+  );
+}
+
+/**
+ * The line under the status strip, on every page and network: each network the page shows is a test network, which may start over from
+ * a new genesis block at any time (the signet without notice as much as a devnet), taking the user's balances and contracts with it
+ */
+export function TestnetNotice() {
+  const t = useT();
+  return (
+    <div className="testnet-notice" role="note">
+      <p className="testnet-notice-inner">
+        <IconInfo size={14} />
+        {t.shell.testnet}
+      </p>
     </div>
   );
 }

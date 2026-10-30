@@ -110,6 +110,12 @@ export default {
     body: '页面已重新读取节点的链，之前的区块、操作和余额都不在这条链上',
   },
 
+  /**
+   * The line under the status strip, on every network the page shows: each is a test network, which may start over from a new genesis
+   * block at any time, the signet without notice as much as a devnet (a risk to what the user holds, so a sentence, §8.1)
+   */
+  testnet: '测试网络可能随时从新的创世块重新开始，余额和合约都不会保留',
+
   /** Console drawer */
   console: {
     sim: 'regtest 控制台',

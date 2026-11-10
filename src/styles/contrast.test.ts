@@ -109,6 +109,7 @@ describe('A field', () => {
       ['pages.css', '.input'],
       ['components.css', '.search-field'],
       ['pages.css', '.lang-select-input'],
+      ['pages.css', '.lang-menu-btn--field'],
     ] as const) {
       expect(rule(name, selector), selector).toContain('border: 1px solid var(--line-field);');
     }

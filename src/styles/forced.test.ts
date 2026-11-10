@@ -88,10 +88,11 @@ describe('Under forced colors', () => {
     // box as well, takes the same colour in both
     expect(forced('.split-final') + forced('.split-fast')).toBe('');
     expect(forced('.split-out-bar')).toBe(forced('.split-out-mark'));
-    // What a shadow or a ground alone marked: the selected tab, the lock chosen, the suggestion picked by the arrow keys
+    // What a shadow or a ground alone marked: the selected tab, the lock chosen, the suggestion and the language picked by the arrow keys
     expect(forced('.tab--on')).toMatch(/border: 1px solid CanvasText;/);
     expect(forced('.lock-row--active')).toMatch(/outline: 1px solid CanvasText;/);
     expect(forced('.search-hit--on')).toMatch(/outline: 2px solid Highlight;/);
+    expect(forced('.lang-menu-opt--on')).toMatch(/outline: 2px solid Highlight;/);
     // A menu's arrow, drawn with gradients that forced colors drop: the system's own
     expect(forced('select.input')).toMatch(/appearance: auto;/);
   });

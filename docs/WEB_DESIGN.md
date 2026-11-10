@@ -939,7 +939,7 @@ The regtest console can produce the scenarios below, and each one has a designed
   `src/lib/format.ts`). An amount that is no number says how one is written ("Amount must be written in digits, such as 12.5"), rather than how many decimals it
   may have. A height, a number of sats or a lock's number typed full width is read as its digits too, in its field and in the search box,
   and a jump to a height with nothing typed opens nothing (`parseCount`).
-- Interface language (D-071): `<html lang>` follows the current language setting so screen readers read in the right language; the language menu is a native dropdown, each option written in its own language and tagged with `lang`.
+- Interface language (D-071): `<html lang>` follows the current language setting so screen readers read in the right language; the language menu writes each option in its own language and tags it with `lang`. With a mouse it is a listbox drawn in the page's own style (the current language ticked; arrow keys, Home, End and a typed first letter move through it, Enter or Space picks, Escape and Tab close it), opening upwards from the footer; on a touch screen it stays the system's own picker.
 
 | Phone · dark overview | Phone · wallet |
 | --- | --- |

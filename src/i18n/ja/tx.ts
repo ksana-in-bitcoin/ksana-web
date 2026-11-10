@@ -21,9 +21,7 @@ const tx: Messages['tx'] = {
 
   stuck: {
     title: 'BTC メンプールで停滞',
-    bumpAnchor: 'P2A アンカーで加速',
     bumpChange: 'お釣りで CPFP',
-    bumpedAnchor: (n: number) => `CPFP の子トランザクションを ${n} 件追加したので、次の BTC ブロックでまとめて承認されます`,
     bumpedChange: 'お釣りで CPFP の子トランザクションを追加したので、次の BTC ブロックでまとめて承認されます',
     bumpFailed: '使える出力がないため、CPFP できません',
   },
@@ -72,16 +70,13 @@ const tx: Messages['tx'] = {
       producer: 'ブロック生成者の資金',
       commit: 'コミットトランザクションから',
       payer: '支払い元の入力',
-      anchor: 'P2A アンカー（親トランザクション）',
     },
     outRole: {
       change: 'お釣り',
       commitment: 'コミットメント出力',
-      anchor: 'P2A アンカー',
       payment: '支払い',
     },
     producerChange: 'ブロック生成者のお釣り',
-    anyone: '誰でも使用可',
     commitmentHint: 'リビールトランザクションが使用',
     opReturn: {
       native: 'NativeOp：VmOp 1 件',

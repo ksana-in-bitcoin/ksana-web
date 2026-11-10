@@ -106,7 +106,7 @@ export default {
     censorOff: '场景：出块者恢复收录这个账户',
     feeSpikeOn: '场景：BTC 费率涨到 40\u00a0sat/vB，结算交易卡住',
     feeSpikeOff: '场景：BTC 费率回落',
-    cpfpMany: (n: number) => `用 P2A 锚点为 ${n} 笔卡住的交易做了 CPFP`,
+    cpfpMany: (n: number) => `用找零为 ${n} 笔卡住的交易做了 CPFP`,
     cpfpOne: '为卡住的交易做了 CPFP',
     offline: (name: string) => `场景：${latinGap(name).trimStart()}下线`,
     online: '场景：出块者恢复在线',

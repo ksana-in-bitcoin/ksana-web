@@ -10,6 +10,10 @@
  * The fixture is written to fixtures/devnet.json; on replay every request is looked up by "method + params", and a request that
  * was not recorded gets a node internal error. While recording, each request is asked of the node only once (its first answer
  * is reused afterwards), so recording and replay take exactly the same path.
+ *
+ * The recording predates D-140: its settlement pairs were rewritten to that shape (the commit pays the commitment alone, the reveal
+ * the change), their payloads as recorded, because the tests below name its heights and what was in the BTC mempool as it was
+ * taken. fixtures/d140.json holds two pairs a D-140 node sent, their envelope data zstd-compressed (D-141), as that node gave them.
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
@@ -20,6 +24,7 @@ import {
   RpcError,
   RpcTransportError,
   type VmOp as SdkVmOp,
+  ZSTD_MAGIC,
   accountToAddress,
   blockHash,
   decodeAddress,
@@ -28,6 +33,7 @@ import {
   fromHex,
   fromJson,
   nativeDataOutput,
+  parseKsn1Envelope,
   parseTx,
   serializeTx,
   sha256,
@@ -35,6 +41,7 @@ import {
   toJson,
   txid,
   type Tx,
+  witnessLeaf,
 } from '@ksana/sdk';
 import { KSA_ASSET_ID, PARAMS } from '../params';
 import { balancesOf, blockProgress, blockStage, finalityConfs, headerCarrier, indexerState, indexerVouches, lockedFeesOf, opProgress, opStatusOf, pairFee, search, summarizeOp, txRoute } from '../views';
@@ -209,7 +216,7 @@ describe.skipIf(!recordUrl)('Record node responses', () => {
     const recordedAt = Date.now();
     const chain = new RpcChain(config, { fetch: recording, manual: true, window, backfillStep: 12, now: () => recordedAt });
     await exercise(chain, account, op);
-    const fx: Fixture = { meta: { recordedAt, source: 'ksana-node main (2 producing nodes, mock bitcoind, ksana-indexer; D-077 settlement batching, D-081 commit / reveal)', account, op, window }, calls };
+    const fx: Fixture = { meta: { recordedAt, source: 'ksana-node main (2 producing nodes, mock bitcoind, ksana-indexer; D-077 settlement batching, D-140 commit / reveal)', account, op, window }, calls };
     writeFileSync(FIXTURE, JSON.stringify(fx));
   }, 120_000);
 });
@@ -405,10 +412,9 @@ describe.skipIf(!fx || !!recordUrl)('Node data source (replaying recorded respon
       const others = reveal.bodies.filter((h) => h !== b.hash).map((h) => chain.getBlock(h));
       if (others.every((o) => o !== undefined)) expect(reveal.entryCount).toBe(b.entries.length + others.reduce((n, o) => n + (o?.entries.length ?? 0), 0));
       if (others.some((o) => o?.entries.length)) carrying++;
-      // Reveal transaction: spends the commit transaction's commitment output (the envelope is in the witness); the outputs are a P2A anchor and an empty OP_RETURN (D-081)
+      // Reveal transaction: spends the commit transaction's commitment output (the envelope is in the witness); the one output is the change, back at the node's funding address (D-081, D-140)
       expect(reveal.inputs.filter((i) => i.role === 'commit' && i.scriptType === 'envelope').length).toBe(1);
-      expect(reveal.outputs.some((o) => o.role === 'anchor' && o.valueSat === 240)).toBe(true);
-      expect(reveal.outputs.filter((o) => o.role === 'op_return').length).toBe(1);
+      expect(reveal.outputs.map((o) => [o.role, o.scriptType])).toEqual([['change', 'p2tr']]);
       expect(reveal.chunks ?? 0).toBeGreaterThan(0);
       expect(reveal.payloadBytes).toBeGreaterThan(0);
       // Fee = commitment output − the reveal transaction's outputs
@@ -439,9 +445,9 @@ describe.skipIf(!fx || !!recordUrl)('Node data source (replaying recorded respon
     expect(carrying).toBeGreaterThan(0);
   });
 
-  it('a commit transaction’s fee is worked out where its input spends the change of a commit the page has read, as on signet, and a settlement’s fee is then the pair’s (D-081)', async () => {
+  it('a commit transaction’s fee is worked out where its input spends the change of a pair the page has read, as on signet, and a settlement’s fee is then the pair’s (D-140)', async () => {
     // The recording's commits spend a funding transaction the page never reads. The later of two settlements is made to spend the
-    // earlier one's change, as a signet producer's commits spend an earlier one's, and pay 308 sats
+    // change the earlier one's reveal pays, as a signet producer's commits spend an earlier pair's, and pay 308 sats
     const settled = new Map<string, { height: number; commit: string; reveal: string }>();
     for (const [key, v] of Object.entries((fx as Fixture).calls)) {
       const r = key.startsWith('ksana_getBlock ') ? (v.result as { hash: string; header: { height: string }; settlement: { commit: string; reveal: string } | null } | undefined) : undefined;
@@ -454,18 +460,21 @@ describe.skipIf(!fx || !!recordUrl)('Node data source (replaying recorded respon
     const shown = (id: Uint8Array) => toHex(id).match(/../g)?.reverse().join('') ?? '';
     const spends = (tx: Tx, parent: Tx) => tx.inputs.findIndex((i) => toHex(i.txid) === toHex(txid(parent)));
     const [aCommit, aReveal, bCommit, bReveal] = [first.commit, first.reveal, second.commit, second.reveal].map((hex) => parseTx(fromHex(hex))) as [Tx, Tx, Tx, Tx];
-    const aCommitment = aReveal.inputs[spends(aReveal, aCommit)]?.vout;
-    const change = aCommit.outputs.findIndex((_, vout) => vout !== aCommitment);
-    const changeValue = aCommit.outputs[change]?.value ?? 0n;
-    const bCommitment = bReveal.inputs[spends(bReveal, bCommit)]?.vout;
-    const commitment = bCommit.outputs.find((_, vout) => vout === bCommitment)?.value ?? 0n;
+    expect([aCommit.outputs.length, aReveal.outputs.length, spends(aReveal, aCommit)]).toEqual([1, 1, 0]);
+    const changeValue = aReveal.outputs[0]?.value ?? 0n;
+    // The later pair keeps its reveal's fee: its commitment is the earlier change less 308 sats, and its own change that less the fee
+    const bRevealFee = (bCommit.outputs[0]?.value ?? 0n) - (bReveal.outputs[0]?.value ?? 0n);
     const commit: Tx = {
       ...bCommit,
-      inputs: bCommit.inputs.map((i) => ({ ...i, txid: txid(aCommit), vout: change })),
-      outputs: bCommit.outputs.map((o, vout) => (vout === bCommitment ? o : { ...o, value: changeValue - commitment - 308n })),
+      inputs: bCommit.inputs.map((i) => ({ ...i, txid: txid(aReveal), vout: 0 })),
+      outputs: bCommit.outputs.map((o) => ({ ...o, value: changeValue - 308n })),
     };
     const vin = spends(bReveal, bCommit);
-    const reveal: Tx = { ...bReveal, inputs: bReveal.inputs.map((i, k) => (k === vin ? { ...i, txid: txid(commit) } : i)) };
+    const reveal: Tx = {
+      ...bReveal,
+      inputs: bReveal.inputs.map((i, k) => (k === vin ? { ...i, txid: txid(commit) } : i)),
+      outputs: bReveal.outputs.map((o) => ({ ...o, value: changeValue - 308n - bRevealFee })),
+    };
     const swaps: [string, string][] = [
       [second.commit, toHex(serializeTx(commit))],
       [second.reveal, toHex(serializeTx(reveal))],
@@ -486,12 +495,14 @@ describe.skipIf(!fx || !!recordUrl)('Node data source (replaying recorded respon
     if (!paid || !revealTx) throw new Error('the settlement was not read');
     expect(paid.inputs.map((i) => i.valueSat)).toEqual([Number(changeValue)]);
     // Its input also shows the address of the change it spends: the producer node's funding address, not an account
-    const spent = chain.getBtcTx(shown(txid(aCommit)))?.outputs[change];
+    const spent = chain.getBtcTx(shown(txid(aReveal)))?.outputs[0];
+    expect(spent?.role).toBe('change');
     expect(spent?.address).toMatch(/^bcrt1/);
     expect(paid.inputs.map((i) => [i.address, i.owner])).toEqual([[spent?.address, null]]);
     expect(paid.feeSat).toBe(308);
     expect(paid.feeRate).toBe(Math.round((308 / paid.vsize) * 100) / 100);
     const revealFee = revealTx.feeSat ?? 0;
+    expect(revealFee).toBe(Number(bRevealFee));
     expect(revealFee).toBeGreaterThan(0);
     expect(pairFee(chain, revealTx)).toMatchObject({ feeSat: 308 + revealFee, vsize: paid.vsize + revealTx.vsize, parts: { commit: 308, reveal: revealFee }, revealOnly: false });
     // The earlier settlement's commit spends the funding transaction: its fee is not known, and its settlement's is the reveal's alone
@@ -502,8 +513,8 @@ describe.skipIf(!fx || !!recordUrl)('Node data source (replaying recorded respon
     expect(earlier && pairFee(chain, earlier)).toEqual({ feeSat: earlier?.feeSat, feeRate: earlier?.feeRate, vsize: earlier?.vsize, revealOnly: true });
   });
 
-  it('a commit transaction’s fee is found below the blocks loaded: the settlements under its block are read, nearest first, until the one whose commit its input spends (D-081)', async () => {
-    // Block #119's settlement is made to spend, paying 308 sats, the change of a commit that only #100's settlement status gives, as
+  it('a commit transaction’s fee is found below the blocks loaded: the settlements under its block are read, nearest first, until the one whose reveal its input spends (D-140)', async () => {
+    // Block #119's settlement is made to spend, paying 308 sats, the change of a pair that only #100's settlement status gives, as
     // a signet producer's commits spend the change of one some 40 blocks below; the page loads no main-chain block below #114
     const f: Fixture = { ...(fx as Fixture), calls: { ...(fx as Fixture).calls } };
     f.calls[keyOf('ksana_getChainInfo', [])] ??= chainInfo(f, PARAMS.CHAIN_ID);
@@ -512,12 +523,16 @@ describe.skipIf(!fx || !!recordUrl)('Node data source (replaying recorded respon
     const shown = (id: Uint8Array) => toHex(id).match(/../g)?.reverse().join('') ?? '';
     const [bCommit, bReveal] = [own.commit, own.reveal].map((hex) => parseTx(fromHex(hex))) as [Tx, Tx];
     const vin = bReveal.inputs.findIndex((i) => toHex(i.txid) === toHex(txid(bCommit)));
-    const change = bCommit.outputs.findIndex((_, vout) => vout !== bReveal.inputs[vin]?.vout);
     const paidOut = bCommit.outputs.reduce((s, o) => s + o.value, 0n);
-    // The funding pair: #119's own, its change worth #119's commit's outputs and 308 sats more
-    const funding: Tx = { ...bCommit, outputs: bCommit.outputs.map((o, vout) => (vout === change ? { ...o, value: paidOut + 308n } : o)) };
-    const fundingReveal: Tx = { ...bReveal, inputs: bReveal.inputs.map((i, k) => (k === vin ? { ...i, txid: txid(funding) } : i)) };
-    const commit: Tx = { ...bCommit, inputs: bCommit.inputs.map((i) => ({ ...i, txid: txid(funding), vout: change })) };
+    const revealFee119 = paidOut - bReveal.outputs.reduce((s, o) => s + o.value, 0n);
+    // The funding pair: #119's own, its reveal's change worth #119's commitment and 308 sats more
+    const funding: Tx = { ...bCommit, outputs: bCommit.outputs.map((o) => ({ ...o, value: paidOut + 308n + revealFee119 })) };
+    const fundingReveal: Tx = {
+      ...bReveal,
+      inputs: bReveal.inputs.map((i, k) => (k === vin ? { ...i, txid: txid(funding) } : i)),
+      outputs: bReveal.outputs.map((o) => ({ ...o, value: paidOut + 308n })),
+    };
+    const commit: Tx = { ...bCommit, inputs: bCommit.inputs.map((i) => ({ ...i, txid: txid(fundingReveal), vout: 0 })) };
     const reveal: Tx = { ...bReveal, inputs: bReveal.inputs.map((i, k) => (k === vin ? { ...i, txid: txid(commit) } : i)) };
     let text = JSON.stringify(f.calls);
     for (const [from, to] of [
@@ -628,26 +643,29 @@ describe.skipIf(!fx || !!recordUrl)('Node data source (replaying recorded respon
   });
 
   /**
-   * `n` settlement pairs made from the recording's #119, each commit spending the change of the one before and paying 308 sats, the
-   * first spending output 0 of `from`, which no settlement gives; each change pays the script `to` where given
+   * `n` settlement pairs made from the recording's #119, each commit spending the change the reveal of the one before pays (D-140)
+   * and paying 308 sats, the first spending output 0 of `from`, which no settlement gives; each change pays the script `to` where given
    */
   const fundedPairs = (n: number, from: string, to?: Uint8Array) => {
     const own = ((fx as Fixture).calls[keyOf('ksana_getBlock', ['119'])]?.result as { settlement: { commit: string; reveal: string } | null } | undefined)?.settlement;
     if (!own) throw new Error('the recording holds no settlement at #119');
     const [first, firstReveal] = [own.commit, own.reveal].map((hex) => parseTx(fromHex(hex))) as [Tx, Tx];
     const vin = firstReveal.inputs.findIndex((i) => toHex(i.txid) === toHex(txid(first)));
-    const commitment = firstReveal.inputs[vin]?.vout ?? -1;
-    const change = first.outputs.findIndex((_, vout) => vout !== commitment);
-    const locked = first.outputs[commitment]?.value ?? 0n;
+    const last = firstReveal.outputs[0]?.value ?? 0n;
+    const revealFee = (first.outputs[0]?.value ?? 0n) - last;
+    if (first.outputs.length !== 1 || firstReveal.outputs.length !== 1 || revealFee <= 0n) throw new Error('the recording’s #119 pair is not a commitment and a change');
     const pairs: { commit: Tx; reveal: Tx }[] = [];
     for (let k = 0; k < n; k++) {
-      // Each change pays for the commits after it: what each pays out, and 308 sats more
-      const value = (first.outputs[change]?.value ?? 0n) + BigInt(n - 1 - k) * (locked + 308n);
+      // Each change pays for the pairs after it: each one's reveal fee, and the 308 sats its commit pays
+      const value = last + BigInt(n - 1 - k) * (revealFee + 308n);
       const before = pairs[k - 1];
-      const spends = before ? { txid: txid(before.commit), vout: change } : { txid: fromHex(from), vout: 0 };
-      const outputs = first.outputs.map((o, vout) => (vout === change ? { ...o, value, ...(to ? { script: to } : {}) } : o));
-      const commit: Tx = { ...first, inputs: first.inputs.map((i) => ({ ...i, ...spends })), outputs };
-      const reveal: Tx = { ...firstReveal, inputs: firstReveal.inputs.map((i, j) => (j === vin ? { ...i, txid: txid(commit) } : i)) };
+      const spends = before ? { txid: txid(before.reveal), vout: 0 } : { txid: fromHex(from), vout: 0 };
+      const commit: Tx = { ...first, inputs: first.inputs.map((i) => ({ ...i, ...spends })), outputs: first.outputs.map((o) => ({ ...o, value: value + revealFee })) };
+      const reveal: Tx = {
+        ...firstReveal,
+        inputs: firstReveal.inputs.map((i, j) => (j === vin ? { ...i, txid: txid(commit) } : i)),
+        outputs: firstReveal.outputs.map((o) => ({ ...o, value, ...(to ? { script: to } : {}) })),
+      };
       pairs.push({ commit, reveal });
     }
     const shown = (id: Uint8Array) => toHex(id).match(/../g)?.reverse().join('') ?? '';
@@ -795,18 +813,41 @@ describe.skipIf(!fx || !!recordUrl)('Node data source (replaying recorded respon
     const block = { hash: r.hash, height: Number(r.header.height), producer, time: 0 };
     const [commit, reveal] = [r.settlement.commit, r.settlement.reveal].map((hex) => parseTx(fromHex(hex))) as [Tx, Tx];
     const theirs = parseSettlement({ commit: serializeTx(commit), reveal: serializeTx(reveal) }, block, DEVNET, 'regtest');
-    const change = theirs?.commit.outputs.findIndex((o) => o.role === 'change') ?? -1;
-    expect(change).toBeGreaterThanOrEqual(0);
-    expect(theirs?.commit.outputs[change]?.owner).toBeNull();
+    // The change is the reveal transaction's one output (D-140); the commit's is the commitment
+    expect(theirs?.commit.outputs.map((o) => o.role)).toEqual(['commitment']);
+    expect(theirs?.reveal.outputs.map((o) => [o.role, o.owner])).toEqual([['change', null]]);
     // The recording's nodes fund with keys of their own; the same pair with its change paying the producer account's address
     const script = Uint8Array.of(0x51, 0x20, ...fromHex(producer, 32));
-    const own: Tx = { ...commit, outputs: commit.outputs.map((o, vout) => (vout === change ? { ...o, script } : o)) };
-    const spends = (i: Tx['inputs'][number]) => toHex(i.txid) === toHex(txid(commit));
-    const revealOwn: Tx = { ...reveal, inputs: reveal.inputs.map((i) => (spends(i) ? { ...i, txid: txid(own) } : i)) };
-    const mine = parseSettlement({ commit: serializeTx(own), reveal: serializeTx(revealOwn) }, block, DEVNET, 'regtest');
-    expect(mine?.commit.outputs[change]).toMatchObject({ role: 'change', owner: producer, address: accountToAddress(fromHex(producer, 32), 'regtest') });
-    expect(mine?.commit.outputs.filter((o) => o.owner !== null).length).toBe(1);
+    const revealOwn: Tx = { ...reveal, outputs: reveal.outputs.map((o) => ({ ...o, script })) };
+    const mine = parseSettlement({ commit: serializeTx(commit), reveal: serializeTx(revealOwn) }, block, DEVNET, 'regtest');
+    expect(mine?.reveal.outputs).toMatchObject([{ role: 'change', owner: producer, address: accountToAddress(fromHex(producer, 32), 'regtest') }]);
+    expect(mine?.commit.outputs.every((o) => o.owner === null)).toBe(true);
     expect(mine?.commit.inputs.every((i) => i.owner === null)).toBe(true);
+  });
+
+  it('a pair a D-140 node sent is read as it is: the commit pays the commitment alone, the reveal the change, and the payload is read from zstd-compressed envelope data (D-140, D-141)', () => {
+    const { pairs } = JSON.parse(readFileSync(new URL('./fixtures/d140.json', import.meta.url), 'utf8')) as { pairs: { hash: string; height: number; producer: string; commit: string; reveal: string }[] };
+    const read = pairs.map((p) => {
+      const leaf = witnessLeaf(parseTx(fromHex(p.reveal)).inputs[0]?.witness ?? []);
+      const data = leaf ? parseKsn1Envelope(DEVNET.magic, leaf)?.payload : undefined;
+      return { data, parsed: parseSettlement({ commit: fromHex(p.commit), reveal: fromHex(p.reveal) }, { hash: p.hash, height: p.height, producer: p.producer, time: 0 }, DEVNET, 'regtest') };
+    });
+    expect(read).toHaveLength(2);
+    for (const { data, parsed } of read) {
+      if (!parsed || !data) throw new Error('the pair was not read');
+      expect([...data.subarray(0, 4)]).toEqual([...ZSTD_MAGIC]);
+      expect(parsed.reveal.payloadBytes).toBe(data.length);
+      expect(parsed.reveal.headers?.length).toBeGreaterThan(0);
+      expect(parsed.commit.outputs.map((o) => [o.role, o.scriptType])).toEqual([['commitment', 'p2tr']]);
+      expect(parsed.reveal.outputs.map((o) => [o.role, o.scriptType, o.owner])).toEqual([['change', 'p2tr', null]]);
+      expect(parsed.reveal.outputs[0]?.address).toMatch(/^bcrt1p/);
+      expect(parsed.reveal.inputs.map((i) => [i.prevout, i.role])).toEqual([[{ txid: parsed.commit.txid, vout: 0 }, 'commit']]);
+      const fee = (parsed.commit.outputs[0]?.valueSat ?? 0) - (parsed.reveal.outputs[0]?.valueSat ?? 0);
+      expect(fee).toBeGreaterThan(0);
+      expect(parsed.reveal.feeSat).toBe(fee);
+    }
+    // The later pair's commit spends the change the earlier one's reveal pays
+    expect(read[1]?.parsed?.commit.inputs.map((i) => i.prevout)).toEqual([{ txid: read[0]?.parsed?.reveal.txid, vout: 0 }]);
   });
 
   it('a reveal transaction is read as the node reads it: a KSN1 output beside its envelope leaves it carrying nothing (D-081, D-133)', () => {

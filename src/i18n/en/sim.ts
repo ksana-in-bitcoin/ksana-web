@@ -108,7 +108,7 @@ const sim: Messages['sim'] = {
     censorOff: 'Scenario: producers include this account again',
     feeSpikeOn: 'Scenario: BTC fee rate jumps to 40\u00a0sat/vB; settlements get stuck',
     feeSpikeOff: 'Scenario: BTC fee rate back to normal',
-    cpfpMany: (n: number) => `Bumped ${n} stuck ${n === 1 ? 'transaction' : 'transactions'} with CPFP via P2A anchors`,
+    cpfpMany: (n: number) => `Bumped ${n} stuck ${n === 1 ? 'transaction' : 'transactions'} with CPFP from their change`,
     cpfpOne: 'Bumped a stuck transaction with CPFP',
     offline: (name: string) => `Scenario: ${name} goes offline`,
     online: 'Scenario: producer back online',

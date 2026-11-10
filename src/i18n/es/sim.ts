@@ -105,7 +105,7 @@ const sim: Messages['sim'] = {
     feeSpikeOn: 'Escenario: la tasa de BTC sube a 40\u00a0sat/vB y las liquidaciones se atascan',
     feeSpikeOff: 'Escenario: la tasa de BTC vuelve a bajar',
     cpfpMany: (n: number) =>
-      n === 1 ? 'CPFP con ancla P2A para 1 transacción atascada' : `CPFP con ancla P2A para ${n} transacciones atascadas`,
+      n === 1 ? 'CPFP con el cambio para 1 transacción atascada' : `CPFP con el cambio para ${n} transacciones atascadas`,
     cpfpOne: 'CPFP para la transacción atascada',
     offline: (name: string) => `Escenario: ${name} fuera de línea`,
     online: 'Escenario: el productor vuelve a estar en línea',

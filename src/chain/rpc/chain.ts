@@ -2681,7 +2681,7 @@ export class RpcChain {
 
   /**
    * A commit transaction's fee, where the page has parsed every transaction its inputs spend, or read them below the blocks it has
-   * (`askCommitFees`): on signet a producer funds almost every commit from the change of an earlier one (D-081). The transactions do not
+   * (`askCommitFees`): on signet a producer funds almost every commit from the change of an earlier pair, which its reveal transaction pays (D-140). The transactions do not
    * carry their inputs' amounts, so a commit funded from elsewhere keeps no fee, and a settlement's fee is then its reveal
    * transaction's alone (`pairFee`). Its inputs then also take the addresses, and any owner, of the outputs they spend
    */
@@ -2703,7 +2703,7 @@ export class RpcChain {
   }
 
   /**
-   * An output the commit transaction `by` spends of a commit read below the blocks the page has (`readFunding`): owned by the
+   * An output the commit transaction `by` spends of a settlement transaction read below the blocks the page has (`readFunding`): owned by the
    * producer of `by`'s block where it pays that account's key, as `parseSettlement` names a settlement's own outputs, a producer's
    * settlement spending its own coins alone (D-078)
    */
@@ -3068,7 +3068,7 @@ export class RpcChain {
   /**
    * Have the node read what the commit transactions a page shows spend, where the page does not know it and so not their fee: a
    * settlement's would be its reveal transaction's alone (`pairFee`). A producer funds almost every commit from the change of an
-   * earlier one (D-081), on signet below the blocks loaded from the tip for about half of those on the first screen: the settlements
+   * earlier pair, the output of its reveal transaction (D-140), on signet below the blocks loaded from the tip for about half of those on the first screen: the settlements
    * of the heights below each commit's block are read, nearest first, until every transaction its inputs spend is found or
    * FUNDING_DEPTH blocks lie below (`readFunding`), one search at a time. A commit funded otherwise (a wallet's coins, a CPFP
    * child's change, a republish's, a parallel block's settlement, which a height's status does not give) keeps no fee; one asked
@@ -3556,7 +3556,7 @@ export class RpcChain {
   /**
    * The transactions `commits` spend that the page does not have (`askCommitFees`), from the settlements (`ksana_getSettlement`) of the
    * heights below their blocks that the page has no block at and has not read before, nearest first, `wide` at a time, until each is
-   * found. Every commit transaction read is kept, not only those `commits` spend: a block opened later, as the page goes down the
+   * found. Every settlement's two transactions read are kept, not only those `commits` spend: a block opened later, as the page goes down the
    * chain, spends one read already, and a commit the page shows that spends one has its fee as the search ends. A height whose read
    * failed is read again by a later search
    */
@@ -3580,11 +3580,14 @@ export class RpcChain {
       answers.forEach((a, j) => {
         if (!a) return;
         this.fundingRead.add(chunk[j] as number);
-        const commit = a.s?.txs ? parseFunding(a.s.txs.commit, this.network) : null;
-        if (!commit) return;
-        this.fundingOuts.set(commit.txid, commit.outputs);
-        kept = true;
-        if (wanted.delete(commit.txid)) found = true;
+        // A commit spends the change of an earlier pair, which its reveal transaction pays (D-140)
+        for (const raw of a.s?.txs ? [a.s.txs.commit, a.s.txs.reveal] : []) {
+          const tx = parseFunding(raw, this.network);
+          if (!tx) continue;
+          this.fundingOuts.set(tx.txid, tx.outputs);
+          kept = true;
+          if (wanted.delete(tx.txid)) found = true;
+        }
       });
       // The fees found show while the search goes on for the rest
       if (found) {

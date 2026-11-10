@@ -486,15 +486,15 @@ its asset's page (D-123); any other event as before (section 5.2).
 The page head gives a confirmed transaction the time of its BTC block, beside it, as a Bitcoin explorer does (with a node, the block's own where the page read it as the tip, else its estimated time, read for an older block, section 7.2), and
 none where that time is not known or the height only a bound; a transaction not confirmed gives when it was built (a settlement's, with its block).
 
-A settlement is two transactions (§7.2, D-081), and the structure diagram draws them as they are: the **commit transaction** spends coins of the producer node's funding key (P2TR key-path), and its outputs are the change and one P2TR commitment output;
+A settlement is two transactions (§7.2, D-081), and the structure diagram draws them as they are: the **commit transaction** spends coins of the producer node's funding key (P2TR key-path), and its one output is the P2TR commitment output;
 the **reveal transaction** spends the commitment output, its Taproot witness holds the signature, the leaf script with the KSN1 envelope (`<key> OP_CHECKSIG OP_FALSE OP_IF <KSN1> <data chunks…> OP_ENDIF`,
-at most 520 bytes per chunk) and the control block, and its outputs are a 240-sat P2A anchor and an empty OP_RETURN. The reveal transaction's fee = commitment output amount − its outputs; the input amount of the commit
+at most 520 bytes per chunk) and the control block, and its one output is the change, back at the node's funding address (D-140); the data in the envelope may be zstd-compressed (D-141), which the SDK reads. The reveal transaction's fee = commitment output amount − its output; the input amount of the commit
 transaction is not in the transaction, so on the node data source the commit's fee is known only where the page has the transaction its input spends. On signet 123 of the
 last 129 commits (read on 2026-10-20) spent the change of an earlier settlement's, 4 to 136 blocks below and 39 in the middle, for about half of those on the first screen
 below the 60 blocks the page loads first, and the other six a wallet's payment to the node's funding address (five) or a republish's or a rescue's commit (one), which no
 settlement status gives. So the settlements list, a block's page, a commit's page and a BTC block's page have it read: the settlement status of each height below the
-commit's block that the page has no block at, nearest first, a batch at a time and at most 240 blocks deep, until the one whose commit the input spends (on the signet's
-first screen one batch found all six that were missing), one search at a time, so that two asked together read no height twice. Every commit read is kept, so that a block
+commit's block that the page has no block at, nearest first, a batch at a time and at most 240 blocks deep, until the one whose transaction the input spends, which since D-140 is its reveal transaction, the one paying the change (on the signet's
+first screen one batch found all six that were missing), one search at a time, so that two asked together read no height twice. Both transactions of every settlement read are kept, so that a block
 opened later down the chain, whose commit spends one of them, gives the pair's fee as it opens, and a commit the page shows that spends one has its fee as the search ends;
 each height is read once (again after a main-chain switch at it or reaching below the blocks the page walks), and one whose read failed is read again as the page draws
 the chain anew a minute or more later, while it shows the commit. A phone reads it as well where the list and a BTC block's page leave their fee column out, so that a
@@ -511,8 +511,8 @@ an input shows the address of the output it spends where the page has read that 
   the entries of all those bodies; the heights of parallel blocks get a prime
   (`#496′`) to tell them apart. The headers and the bodies are each counted by name above their blocks ("3 block headers · #2,297 – #2,299", "1 block body"):
   the headers' bare count had read "3 · #2,297 – #2,299".
-- A transaction's status gives only its confirmation count ("3 confirmations"); "BTC final" is the state of a block, not of any one transaction. When stuck in the mempool, a settlement transaction offers "Bump via P2A anchor",
-  and a path C native transaction offers "CPFP with change".
+- A transaction's status gives only its confirmation count ("3 confirmations"); "BTC final" is the state of a block, not of any one transaction. When stuck in the mempool, a settlement transaction and a path C native transaction offer "CPFP with change":
+  the child spends the change the transaction pays its sender, a settlement pair's being its reveal transaction's (D-140).
 - The diagram puts the inputs on the left and the outputs on the right, an index to a row, under their headings ("Inputs · 1", "Outputs · 2"), a reveal transaction's
   witness envelope in the row below the longer side's last box. On a phone, in one column, it gives the inputs under their heading, the envelope after them (it is in
   their witness), then the outputs under theirs: it had put each input above the output of its index with no heading, so that a commit's funding and change, both
@@ -772,7 +772,7 @@ The regtest console can produce the scenarios below, and each one has a designed
 | State | How it arises | What the interface shows | Basis |
 | --- | --- | --- | --- |
 | Settlement backlog near / at the limit | BTC fee rates spike; settlements funded at 2 sat/vB are stuck in the mempool | The status strip and readouts show n/6 and the fee floor; at the limit a magenta alert, and the wallet says in one sentence: balances already in effect do not change, switch to path C if urgent | §6.4, D-046 |
-| Settlement stuck | Same as above | "Bump via P2A anchor" on the transaction page; anyone can CPFP; a native transaction can CPFP with its change | §7.2 |
+| Settlement stuck | Same as above | "CPFP with change" on the transaction page: the producer spends its reveal transaction's change; a native transaction can CPFP with its change | §7.2 |
 | Producer censorship | No producer includes your fast-path ops | After waiting 3 blocks, path C is suggested, with the same nonce, amount and max_gas prefilled and path C locked in | §2.8, §5.3 |
 | Same-nonce race | Path C is included first | The original path B op shows "Dropped from the mempool: nonce already used"; the two outcomes are explained before signing | §4.3, §15, D-068 |
 | Path C op waiting | An op is sent while the account's path C op waits for its BTC confirmations | The new op takes the next nonce and waits behind it, saying so; path C waits until the first is included | §7.4, D-104 |

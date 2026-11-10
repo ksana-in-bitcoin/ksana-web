@@ -24,9 +24,7 @@ const tx: Messages['tx'] = {
 
   stuck: {
     title: 'Stuck in the BTC mempool',
-    bumpAnchor: 'Bump via P2A anchor',
     bumpChange: 'CPFP with change',
-    bumpedAnchor: (n: number) => `Attached ${n} CPFP child ${n === 1 ? 'transaction' : 'transactions'}; they’ll confirm together in the next BTC block`,
     bumpedChange: 'Attached a CPFP child spending the change; they’ll confirm together in the next BTC block',
     bumpFailed: 'No spendable output, so CPFP isn’t possible',
   },
@@ -78,17 +76,13 @@ const tx: Messages['tx'] = {
       producer: 'Producer funding',
       commit: 'From the commit transaction',
       payer: 'Payment input',
-      anchor: 'P2A anchor (parent)',
     },
     outRole: {
       change: 'Change',
       commitment: 'Commitment output',
-      anchor: 'P2A anchor',
       payment: 'Payment',
     },
     producerChange: 'Producer change',
-    /** A P2A anchor has no owner */
-    anyone: 'Anyone can spend',
     /** Commitment output: spent by the reveal transaction */
     commitmentHint: 'Spent by the reveal transaction',
     opReturn: {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { accountFromAddress, toHex } from '@ksana/sdk';
 import { Devnet, KSA_DECIMALS, KSA_UNIT, satsForAll, type OpDraft } from './engine';
-import { BTC_FINAL_DATA_CONFS, KSA_ASSET_ID, P2A_VALUE_SAT, PARAMS, emptyBlockWeight } from '../params';
+import { BTC_FINAL_DATA_CONFS, KSA_ASSET_ID, PARAMS, emptyBlockWeight } from '../params';
 import type { Block, BtcTx, Hex, OpRecord } from '../types';
 import { t } from '../../i18n';
 import { fmtInt } from '../../lib/format';
@@ -44,7 +44,7 @@ function reveal(s: Devnet, txid: Hex): BtcTx {
   return tx;
 }
 
-/** Structure of the commit / reveal pair (D-081) */
+/** Structure of the commit / reveal pair (D-081, D-140) */
 function checkPair(s: Devnet, rv: BtcTx) {
   expect(['settlement', 'rescue', 'headers']).toContain(rv.kind);
   expect(rv.commitTxid).toBeDefined();
@@ -55,14 +55,15 @@ function checkPair(s: Devnet, rv: BtcTx) {
   expect(cm.inputs[0]?.role).toBe('producer');
   expect(cm.inputs[0]?.scriptType).toBe('p2tr');
   expect(cm.inputs[0]?.owner).toBe(rv.author);
-  expect(cm.outputs.map((o) => o.role)).toEqual(['change', 'commitment']);
-  expect(cm.outputs[1]?.valueSat).toBe((rv.feeSat ?? 0) + P2A_VALUE_SAT);
+  expect(cm.outputs.map((o) => o.role)).toEqual(['commitment']);
+  expect(cm.outputs[0]?.valueSat).toBe((cm.inputs[0]?.valueSat ?? 0) - (cm.feeSat ?? 0));
   expect(rv.inputs).toHaveLength(1);
-  expect(rv.inputs[0]?.prevout).toEqual({ txid: cm.txid, vout: 1 });
+  expect(rv.inputs[0]?.prevout).toEqual({ txid: cm.txid, vout: 0 });
   expect(rv.inputs[0]?.scriptType).toBe('envelope');
-  expect(rv.outputs.map((o) => o.role)).toEqual(['anchor', 'op_return']);
-  expect(rv.outputs[0]?.valueSat).toBe(P2A_VALUE_SAT);
-  expect(rv.outputs[0]?.scriptType).toBe('p2a');
+  expect(rv.outputs.map((o) => o.role)).toEqual(['change']);
+  expect(rv.outputs[0]?.valueSat).toBe((cm.outputs[0]?.valueSat ?? 0) - (rv.feeSat ?? 0));
+  expect(rv.outputs[0]?.owner).toBe(rv.author);
+  expect(rv.outputs[0]?.scriptType).toBe('p2tr');
   expect(rv.headers.length).toBeGreaterThan(0);
   expect(rv.headers.length).toBeLessThanOrEqual(PARAMS.MAX_SETTLEMENT_HEADERS);
   expect(rv.payloadBytes).toBeLessThanOrEqual(PARAMS.MAX_BLOCK_DATA_BYTES);
@@ -732,7 +733,7 @@ describe('devnet simulator', () => {
     expect(s.opSize('B', base.action)).toBeLessThan(s.opSize('B', base.action, 'Bip322Simple'));
   });
 
-  it('fee-rate spike: settlements stuck in the mempool, the backlog limit triggers; after CPFP via the P2A anchor, commit / reveal enter a block together', () => {
+  it('fee-rate spike: settlements stuck in the mempool, the backlog limit triggers; after CPFP from the reveal transaction’s change, commit / reveal enter a block together', () => {
     const s = sim();
     s.setFeeSpike(true);
     expect(s.btcMinFeeRate).toBeGreaterThan(s.settlementFeeRate);
@@ -757,12 +758,14 @@ describe('devnet simulator', () => {
     for (const b of after) expect(b.entries.every((e) => e.entry.kind === 'Forced')).toBe(true);
     expect(s.mempool.length).toBeGreaterThan(0);
 
-    // CPFP: the child spends the reveal transaction's P2A anchor, the package fee rate suffices, commit and reveal confirm together
-    const n = s.cpfpStuck(s.demoId);
+    // CPFP: the producer's child spends the reveal transaction's change, the package fee rate suffices, commit and reveal confirm together
+    const n = s.cpfpStuck();
     expect(n).toBeGreaterThan(0);
     const child = s.btcMempool.find((t) => t.kind === 'cpfp' && t.parent === stuck.txid) as BtcTx;
     expect(child).toBeDefined();
-    expect(child.inputs[0]).toMatchObject({ prevout: { txid: stuck.txid, vout: 0 }, role: 'anchor', scriptType: 'p2a' });
+    expect(child.inputs).toHaveLength(1);
+    expect(child.inputs[0]).toMatchObject({ prevout: { txid: stuck.txid, vout: 0 }, owner: stuck.author, role: 'payer', scriptType: 'p2tr' });
+    expect(child.author).toBe(stuck.author);
     expect(s.canConfirm(stuck)).toBe(true);
     const commit = s.getBtcTx(stuck.commitTxid ?? '') as BtcTx;
     expect(s.canConfirm(commit)).toBe(true);

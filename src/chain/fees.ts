@@ -8,9 +8,6 @@ export const VB = {
   base: 10.5,
   in: { p2tr: 57.5, p2wpkh: 68 },
   out: { p2tr: 43, p2wpkh: 31 },
-  p2a: 13,
-  /** An empty OP_RETURN output (8-byte value + 1-byte length + OP_RETURN) */
-  opReturnEmpty: 10,
 };
 
 /** Virtual bytes of a KSN1 data output (OP_RETURN, magic and the payload chunked at 520 bytes) */
@@ -25,17 +22,18 @@ export function chunkCount(payload: number): number {
 }
 
 /**
- * Virtual sizes of the settlement's commit / reveal transactions (D-081). Commit transaction: one P2TR funding input, change and
+ * Virtual sizes of the settlement's commit / reveal transactions (D-081, D-140). Commit transaction: one P2TR funding input and
  * the commitment output; reveal transaction: the script-path input spending the commitment output (witness = signature + leaf
- * script + control block, with the payload in the leaf script, weighted at 1/4), the P2A anchor and an empty OP_RETURN.
+ * script + control block, with the payload in the leaf script, weighted at 1/4) and the producer's change. The payload is counted
+ * as it is encoded: a node may send it zstd-compressed (D-141), which makes the reveal transaction smaller than this.
  */
 export function envelopeVbytes(payloadBytes: number): { commit: number; reveal: number } {
   const chunks = chunkCount(payloadBytes);
   // Leaf script: PUSH32 public key (33) + CHECKSIG + FALSE + IF + magic push (5) + data pushes (at most a 3-byte length prefix per chunk) + ENDIF
   const leaf = 33 + 3 + 5 + payloadBytes + chunks * 3 + 1;
   const witness = 1 + (1 + 64) + (3 + leaf) + (1 + 33);
-  const reveal = VB.base + 41 + witness / 4 + VB.p2a + VB.opReturnEmpty;
-  const commit = VB.base + VB.in.p2tr + VB.out.p2tr * 2;
+  const reveal = VB.base + 41 + witness / 4 + VB.out.p2tr;
+  const commit = VB.base + VB.in.p2tr + VB.out.p2tr;
   return { commit: Math.ceil(commit), reveal: Math.ceil(reveal) };
 }
 

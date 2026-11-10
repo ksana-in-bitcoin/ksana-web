@@ -23,7 +23,7 @@ import { Rng } from '../../lib/rng';
 import { fmtAmount, fmtInt } from '../../lib/format';
 import { lazy, onLocaleChange, t, withText } from '../../i18n';
 import { phash } from '../../lib/phash';
-import { BTC_FINAL_DATA_CONFS, KSA_ASSET_ID, NODE_POLICY, P2A_VALUE_SAT, PARAMS, emptyBlockWeight, headerBytes } from '../params';
+import { BTC_FINAL_DATA_CONFS, KSA_ASSET_ID, NODE_POLICY, PARAMS, emptyBlockWeight, headerBytes } from '../params';
 import { VB, chunkCount, envelopeVbytes, opReturnVbytes, pathCFee } from '../fees';
 import { tallyCheck, type BacklogStatus, type ExchangeLockView, type FeeEstimate, type IndexerTally } from '../model';
 import type {
@@ -96,6 +96,8 @@ const RESCUE_AFTER = 25 * SEC;
 
 /** Minimum amount of a change output (the P2TR dust limit) */
 const DUST_SAT = 330;
+/** Virtual bytes of a CPFP child: P2TR inputs and one P2TR change output */
+const childSize = (inputs: number): number => Math.ceil(VB.base + VB.in.p2tr * inputs + VB.out.p2tr);
 
 export interface SimOptions {
   seed?: number;
@@ -2255,19 +2257,19 @@ export class Devnet {
   }
 
   /**
-   * The commit + reveal pair of a settlement / rescue / republish (D-081). Commit transaction: one P2TR funding input of the producer →
-   * change + commitment output (amount = the reveal transaction's fee + 240 sats); reveal transaction: spends the commitment output
-   * (script path, the witness holds the envelope with the payload) → P2A anchor (240 sats, anyone can CPFP) + an empty OP_RETURN.
-   * Returns null when funding is insufficient.
+   * The commit + reveal pair of a settlement / rescue / republish (D-081, D-140). Commit transaction: one P2TR funding input of the
+   * producer → the commitment output (the input less the commit transaction's fee); reveal transaction: spends the commitment output
+   * (script path, the witness holds the envelope with the payload) → the producer's change, which only the producer can spend, to
+   * fund its next pair or a CPFP child. Returns null when funding is insufficient.
    */
   private buildPair(spec: PairSpec): { commit: BtcTx; reveal: BtcTx } | null {
     const { commit: commitVb, reveal: revealVb } = envelopeVbytes(spec.payloadBytes);
     const feeRate = Math.max(PARAMS.MIN_SETTLEMENT_FEERATE, this.settlementFeeRate);
     const commitFee = Math.ceil(commitVb * feeRate);
     const revealFee = Math.ceil(revealVb * feeRate);
-    const commitment = revealFee + P2A_VALUE_SAT;
-    const utxo = this.fundingUtxo(spec.author, commitFee + commitment);
+    const utxo = this.fundingUtxo(spec.author, commitFee + revealFee);
     if (!utxo) return null;
+    const commitment = utxo.valueSat - commitFee;
     const commitTxid = this.rng.hex(32);
     const revealTxid = this.rng.hex(32);
     utxo.spentBy = commitTxid;
@@ -2281,10 +2283,7 @@ export class Devnet {
       bodies: [],
       entryCount: 0,
       inputs: [{ prevout: utxo.outpoint, valueSat: utxo.valueSat, owner: spec.author, role: 'producer', scriptType: 'p2tr', sighash: 'DEFAULT' }],
-      outputs: [
-        { valueSat: utxo.valueSat - commitFee - commitment, role: 'change', owner: spec.author, address: this.addressOf(spec.author), scriptType: 'p2tr' },
-        { valueSat: commitment, role: 'commitment', owner: spec.author, scriptType: 'p2tr' },
-      ],
+      outputs: [{ valueSat: commitment, role: 'commitment', owner: spec.author, scriptType: 'p2tr' }],
       vsize: commitVb,
       feeSat: commitFee,
       feeRate,
@@ -2301,11 +2300,8 @@ export class Devnet {
       headers: spec.headers,
       bodies: spec.bodies,
       entryCount: spec.entryCount,
-      inputs: [{ prevout: { txid: commitTxid, vout: 1 }, valueSat: commitment, owner: spec.author, role: 'commit', scriptType: 'envelope', sighash: 'DEFAULT' }],
-      outputs: [
-        { valueSat: P2A_VALUE_SAT, role: 'anchor', owner: null, scriptType: 'p2a' },
-        { valueSat: 0, role: 'op_return', owner: null, scriptType: 'op_return' },
-      ],
+      inputs: [{ prevout: { txid: commitTxid, vout: 0 }, valueSat: commitment, owner: spec.author, role: 'commit', scriptType: 'envelope', sighash: 'DEFAULT' }],
+      outputs: [{ valueSat: commitment - revealFee, role: 'change', owner: spec.author, address: this.addressOf(spec.author), scriptType: 'p2tr' }],
       vsize: revealVb,
       feeSat: revealFee,
       feeRate,
@@ -2483,7 +2479,7 @@ export class Devnet {
   // BTC block production (regtest)
   // =====================================================================
 
-  /** A reveal transaction's package: the unconfirmed commit transaction, the reveal transaction itself and the CPFP child hanging off the P2A anchor */
+  /** A reveal transaction's package: the unconfirmed commit transaction, the reveal transaction itself and the CPFP child spending its change */
   private packageOf(reveal: BtcTx): BtcTx[] {
     const out: BtcTx[] = [];
     const commit = reveal.commitTxid ? this.btcTxs.get(reveal.commitTxid) : undefined;
@@ -2724,21 +2720,21 @@ export class Devnet {
     this.bump();
   }
 
-  /** Anyone can CPFP via the reveal transaction's P2A anchor (SPEC §7.2, D-081). Attaches a child transaction to every stuck settlement in the mempool */
-  cpfpStuck(payer: Hex): number {
+  /** A producer bumps its own pair with a CPFP child spending the reveal transaction's change (SPEC §7.2, D-140). Attaches one to every stuck settlement in the mempool */
+  cpfpStuck(): number {
     this.syncLive();
     let count = 0;
     for (const tx of [...this.btcMempool]) {
       if (!this.isReveal(tx) || tx.status !== 'broadcast') continue;
       if (this.effectiveFeeRate(tx) >= this.btcMinFeeRate) continue;
-      if (this.cpfp(tx, payer)) count++;
+      if (tx.author && this.cpfp(tx, tx.author)) count++;
     }
     if (count) this.emit('scenario', lazy((m) => m.sim.event.cpfpMany, count));
     this.bump();
     return count;
   }
 
-  /** Attach a child transaction to one stuck transaction: for a reveal transaction it spends the P2A anchor (speeding up the commit transaction as well), for other transactions (such as a path C native transaction) it spends the change */
+  /** Attach a child transaction to one stuck transaction: it spends the change the transaction pays `payer`, a reveal transaction's being its producer's (which speeds up the commit transaction as well) */
   cpfpTx(txid: Hex, payer: Hex): boolean {
     this.syncLive();
     const tx = this.btcTxs.get(txid);
@@ -2752,20 +2748,21 @@ export class Devnet {
   }
 
   private cpfp(tx: BtcTx, payer: Hex): boolean {
-    const anchorIdx = tx.outputs.findIndex((o) => o.role === 'anchor');
-    const changeIdx = tx.outputs.findIndex((o) => o.role === 'change' && o.owner === payer);
-    const spendIdx = anchorIdx >= 0 ? anchorIdx : changeIdx;
+    const spendIdx = tx.outputs.findIndex((o) => o.role === 'change' && o.owner === payer);
     if (spendIdx < 0) return false;
     const spent = tx.outputs[spendIdx] as TxOut;
-    const childVsize = 120;
     const target = this.btcMinFeeRate + 2;
     // The child must lift the fee rate of the whole package (unconfirmed commit + reveal + child) above the floor
     const pkg = this.isReveal(tx) ? this.packageOf(tx).filter((x) => x.kind !== 'cpfp') : [tx];
     const pkgFee = pkg.reduce((s, x) => s + (x.feeSat ?? 0), 0);
     const pkgVsize = pkg.reduce((s, x) => s + x.vsize, 0);
-    const fee = Math.ceil(target * (pkgVsize + childVsize) - pkgFee);
-    const funding = this.fundingUtxo(payer, fee);
-    const value = funding?.valueSat ?? fee + 20_000;
+    const feeOf = (inputs: number) => Math.ceil(target * (pkgVsize + childSize(inputs)) - pkgFee);
+    // The change pays the child's fee where it can, as a reveal transaction's does; a smaller one takes another of the payer's outputs with it
+    const alone = spent.valueSat >= feeOf(1) + DUST_SAT;
+    const childVsize = childSize(alone ? 1 : 2);
+    const fee = feeOf(alone ? 1 : 2);
+    const funding = alone ? undefined : this.fundingUtxo(payer, fee);
+    const value = alone ? 0 : (funding?.valueSat ?? fee + 20_000);
     const prevout = funding?.outpoint ?? { txid: this.rng.hex(32), vout: 0 };
     const child: BtcTx = {
       txid: this.rng.hex(32),
@@ -2780,11 +2777,11 @@ export class Devnet {
           prevout: { txid: tx.txid, vout: spendIdx },
           valueSat: spent.valueSat,
           owner: spent.owner,
-          role: anchorIdx >= 0 ? 'anchor' : 'payer',
-          scriptType: anchorIdx >= 0 ? 'p2a' : 'p2tr',
+          role: 'payer',
+          scriptType: 'p2tr',
           sighash: 'DEFAULT',
         },
-        { prevout, valueSat: value, owner: payer, role: 'payer', scriptType: 'p2tr', sighash: 'DEFAULT' },
+        ...(alone ? [] : [{ prevout, valueSat: value, owner: payer, role: 'payer', scriptType: 'p2tr', sighash: 'DEFAULT' } as const]),
       ],
       outputs: [{ valueSat: value + spent.valueSat - fee, role: 'change', owner: payer, address: this.addressOf(payer), scriptType: 'p2tr' }],
       vsize: childVsize,

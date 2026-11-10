@@ -299,8 +299,6 @@ export const entryOp = (e: SdkEntry): SdkVmOp | null => (e.kind === 'Forced' || 
 
 // —— KSN1 envelope (D-081, core/crates/ksana-btc/src/envelope.rs) ——
 
-const P2A_SCRIPT = Uint8Array.of(0x51, 0x02, 0x4e, 0x73);
-
 function equal(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
@@ -358,11 +356,11 @@ export function payloadBlocks(payload: Payload): { headers: Hex[]; heights: numb
 }
 
 /**
- * Parse the settlement transactions a block carries (commit / reveal, Bitcoin network serialization, D-081). The commit
- * transaction's inputs are the producer node's funding and its outputs the change and the commitment output; the reveal transaction
- * spends the commitment output (envelope and payload in the witness) and outputs a P2A anchor and an empty OP_RETURN. The
- * transactions themselves do not carry the funding inputs' amounts, so the commit transaction's fee is left empty; the reveal
- * transaction's fee = commitment output amount − anchor amount. Nor do they carry whose the inputs are: the funding key is the
+ * Parse the settlement transactions a block carries (commit / reveal, Bitcoin network serialization, D-081, D-140). The commit
+ * transaction's inputs are the producer node's funding and its output the commitment output; the reveal transaction spends the
+ * commitment output (envelope and payload in the witness, which may be zstd-compressed, D-141) and pays the change back to the
+ * node's funding address. The transactions themselves do not carry the funding inputs' amounts, so the commit transaction's fee is
+ * left empty; the reveal transaction's fee = commitment output amount − change. Nor do they carry whose the inputs are: the funding key is the
  * node's own, apart from the block's producer account (SPEC §7.7), so only an output paying that account's address names it.
  */
 /**
@@ -419,7 +417,6 @@ export function parseSettlement(
   }));
   const revealOutputs: TxOut[] = reveal.outputs.map((o) => {
     const valueSat = Number(o.value);
-    if (equal(o.script, P2A_SCRIPT)) return { valueSat, role: 'anchor', owner: null, scriptType: 'p2a' };
     if (o.script[0] === 0x6a) return { valueSat, role: 'op_return', owner: null, scriptType: 'op_return' };
     const address = addressOfScript(o.script, network);
     return { valueSat, role: 'change', owner: producerOwned(o.script, block.producer), scriptType: scriptKind(o.script) ?? 'p2tr', ...(address ? { address } : {}) };
@@ -468,7 +465,7 @@ export function parseSettlement(
 }
 
 /**
- * An output of a settlement's commit transaction read on its own, for a later commit transaction that spends it (`RpcChain.readFunding`):
+ * An output of a settlement's commit or reveal transaction read on its own, for a later commit transaction that spends it (`RpcChain.readFunding`):
  * its amount, its address, and the key a P2TR output pays, by which the block of the commit that spends it names the owner, as
  * `producerOwned` names a settlement's own
  */
@@ -478,7 +475,7 @@ export interface FundingOut {
   key?: Hex;
 }
 
-/** A settlement's commit transaction (network serialization) read on its own: its ID, and its outputs as `FundingOut` */
+/** One of a settlement's transactions (network serialization) read on its own: its ID, and its outputs as `FundingOut` */
 export function parseFunding(raw: Uint8Array, network: BtcNetwork): { txid: Hex; outputs: FundingOut[] } | null {
   let tx: Tx;
   try {

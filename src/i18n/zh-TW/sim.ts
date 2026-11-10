@@ -101,7 +101,7 @@ const sim: Messages['sim'] = {
     censorOff: '情境：出塊者恢復收錄這個帳戶',
     feeSpikeOn: '情境：BTC 費率漲到 40\u00a0sat/vB，結算交易卡住',
     feeSpikeOff: '情境：BTC 費率回落',
-    cpfpMany: (n: number) => `用 P2A 錨點為 ${n} 筆卡住的交易做了 CPFP`,
+    cpfpMany: (n: number) => `用找零為 ${n} 筆卡住的交易做了 CPFP`,
     cpfpOne: '為卡住的交易做了 CPFP',
     offline: (name: string) => `情境：${latinGap(name).trimStart()}離線`,
     online: '情境：出塊者恢復上線',

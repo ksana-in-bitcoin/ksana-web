@@ -671,7 +671,7 @@ function Scenarios({ sim }: { sim: Devnet }) {
           <Button variant={sim.feeSpike ? 'primary' : 'secondary'} onClick={() => sim.setFeeSpike(!sim.feeSpike)} aria-pressed={sim.feeSpike}>
             {sc.fee.toggle}
           </Button>
-          <Button disabled={stuck === 0} onClick={() => setNote(sc.fee.cpfpDone(sim.cpfpStuck(sim.faucetId)))}>
+          <Button disabled={stuck === 0} onClick={() => setNote(sc.fee.cpfpDone(sim.cpfpStuck()))}>
             {stuck ? sc.fee.cpfpCount(stuck) : sc.fee.cpfp}
           </Button>
         </div>

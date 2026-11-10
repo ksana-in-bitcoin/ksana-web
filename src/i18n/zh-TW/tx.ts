@@ -21,9 +21,7 @@ const tx: Messages['tx'] = {
 
   stuck: {
     title: '卡在 BTC 記憶池',
-    bumpAnchor: '用 P2A 錨點加速',
     bumpChange: '用找零做 CPFP',
-    bumpedAnchor: (n: number) => `已掛上 ${n} 筆 CPFP 子交易，下一個 BTC 區塊會一起確認`,
     bumpedChange: '已用找零掛上 CPFP 子交易，下一個 BTC 區塊會一起確認',
     bumpFailed: '沒有可花的輸出，無法做 CPFP',
   },
@@ -72,16 +70,13 @@ const tx: Messages['tx'] = {
       producer: '出塊者出資',
       commit: '來自提交交易',
       payer: '付款輸入',
-      anchor: 'P2A 錨點（父交易）',
     },
     outRole: {
       change: '找零',
       commitment: '承諾輸出',
-      anchor: 'P2A 錨點',
       payment: '付款',
     },
     producerChange: '出塊者找零',
-    anyone: '任何人可花',
     commitmentHint: '由揭示交易花掉',
     opReturn: {
       native: 'NativeOp：一筆 VmOp',

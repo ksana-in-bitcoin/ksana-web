@@ -113,8 +113,8 @@ const shell: Messages['shell'] = {
       title: 'Tasas de BTC disparadas',
       hint: 'Las liquidaciones se atascan en la mempool de BTC; con el atasco al límite, las rutas rápidas se pausan',
       toggle: 'Tasas disparadas',
-      cpfp: 'CPFP con ancla P2A',
-      cpfpCount: (n: number) => `CPFP con ancla P2A (${n})`,
+      cpfp: 'CPFP con el cambio',
+      cpfpCount: (n: number) => `CPFP con el cambio (${n})`,
       cpfpDone: (n: number) =>
         n === 1
           ? '1 transacción acelerada; se confirma en el siguiente bloque BTC'

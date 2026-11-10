@@ -68,7 +68,8 @@ export function TxDetail({ id, block: named }: { id: string; block?: string }) {
   // CPFP bumping is a demo feature of the simulator; the node data source cannot see the BTC mempool and never judges a transaction stuck
   const demo = sim.kind === 'sim' ? sim : null;
   const stuck = !!demo && tx.status === 'broadcast' && !demo.canConfirm(tx);
-  const canAnchor = tx.outputs.some((o) => o.role === 'anchor');
+  // A commit transaction has no output of its own to spend: its reveal transaction's change bumps the pair (D-140)
+  const bumped = tx.kind === 'commit' && tx.revealTxid ? tx.revealTxid : tx.txid;
   const block = tx.forBlock ? sim.getBlock(tx.forBlock) : undefined;
   const replacedBy = tx.replacedBy ? sim.getBtcTx(tx.replacedBy) : undefined;
   const rebuilt = isRebuild(tx);
@@ -125,16 +126,10 @@ export function TxDetail({ id, block: named }: { id: string; block?: string }) {
             <Button
               size="sm"
               onClick={() =>
-                setNote(
-                  canAnchor
-                    ? t.tx.stuck.bumpedAnchor(demo.cpfpStuck(demo.faucetId))
-                    : demo.cpfpTx(tx.txid, tx.author ?? demo.faucetId)
-                      ? t.tx.stuck.bumpedChange
-                      : t.tx.stuck.bumpFailed,
-                )
+                setNote(demo.cpfpTx(bumped, tx.author ?? demo.faucetId) ? t.tx.stuck.bumpedChange : t.tx.stuck.bumpFailed)
               }
             >
-              {canAnchor ? t.tx.stuck.bumpAnchor : t.tx.stuck.bumpChange}
+              {t.tx.stuck.bumpChange}
             </Button>
           }
         >
@@ -266,8 +261,8 @@ function rowOf(row: number): CSSProperties {
 }
 
 /**
- * Transaction structure diagram. A commit transaction is the producer's funding → change + commitment output; a reveal transaction
- * spends the commitment output → P2A anchor + empty OP_RETURN, with the payload in that input's witness envelope (D-081); a native
+ * Transaction structure diagram. A commit transaction is the producer's funding → the commitment output; a reveal transaction
+ * spends the commitment output → the producer's change, with the payload in that input's witness envelope (D-081, D-140); a native
  * transaction still uses the KSN1 OP_RETURN. On a wide screen the inputs face the outputs, an index to a row, under their headings;
  * on a phone, in one column, the inputs come under theirs, the reveal transaction's envelope after them, then the outputs under
  * theirs: its rows had put each input above the output of its index, two boxes marked #0 that only their roles told apart. The
@@ -373,7 +368,7 @@ function OutBox({ idx, v, tx }: { idx: number; v: TxOut; tx: BtcTx }) {
       </div>
     );
   }
-  const producerTx = tx.kind === 'settlement' || tx.kind === 'rescue' || tx.kind === 'commit';
+  const producerTx = tx.kind === 'settlement' || tx.kind === 'rescue' || tx.kind === 'headers' || tx.kind === 'commit';
   return (
     <div className={`txd-box txd-box--${v.role} txd-out`} style={rowOf(idx + 2)}>
       <div className="txd-box-top">
@@ -383,8 +378,6 @@ function OutBox({ idx, v, tx }: { idx: number; v: TxOut; tx: BtcTx }) {
       </div>
       {v.owner ? (
         <AccountRef id={v.owner} short />
-      ) : v.role === 'anchor' ? (
-        <span className="small soft">{d.anyone}</span>
       ) : v.role === 'commitment' ? (
         <span className="small soft">{d.commitmentHint}</span>
       ) : v.address ? (

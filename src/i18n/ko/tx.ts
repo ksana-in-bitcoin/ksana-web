@@ -20,9 +20,7 @@ const tx: Messages['tx'] = {
 
   stuck: {
     title: 'BTC 멤풀에서 정체',
-    bumpAnchor: 'P2A 앵커로 가속',
     bumpChange: '잔돈으로 CPFP',
-    bumpedAnchor: (n: number) => `CPFP 자식 트랜잭션 ${n}건을 붙여, 다음 BTC 블록에서 함께 확인됩니다`,
     bumpedChange: '잔돈으로 CPFP 자식 트랜잭션을 붙여, 다음 BTC 블록에서 함께 확인됩니다',
     bumpFailed: '사용할 수 있는 출력이 없어 CPFP를 할 수 없습니다',
   },
@@ -71,16 +69,13 @@ const tx: Messages['tx'] = {
       producer: '블록 생성자 자금',
       commit: '커밋 트랜잭션에서',
       payer: '결제 입력',
-      anchor: 'P2A 앵커(부모 트랜잭션)',
     },
     outRole: {
       change: '잔돈',
       commitment: '약정 출력',
-      anchor: 'P2A 앵커',
       payment: '결제',
     },
     producerChange: '블록 생성자 잔돈',
-    anyone: '누구나 사용 가능',
     commitmentHint: '공개 트랜잭션이 사용',
     opReturn: {
       native: 'NativeOp: VmOp 1개',

@@ -100,7 +100,7 @@ const sim: Messages['sim'] = {
     censorOff: '시나리오: 블록 생성자가 이 계정을 다시 포함',
     feeSpikeOn: '시나리오: BTC 수수료율이 40\u00a0sat/vB로 올라 정산 트랜잭션 정체',
     feeSpikeOff: '시나리오: BTC 수수료율 하락',
-    cpfpMany: (n: number) => `P2A 앵커로 정체된 트랜잭션 ${n}건 CPFP`,
+    cpfpMany: (n: number) => `잔돈으로 정체된 트랜잭션 ${n}건 CPFP`,
     cpfpOne: '정체된 트랜잭션 CPFP 완료',
     offline: (name: string) => `시나리오: ${name} 오프라인`,
     online: '시나리오: 블록 생성자 다시 온라인',

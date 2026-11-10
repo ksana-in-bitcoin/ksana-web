@@ -20,12 +20,7 @@ const tx: Messages['tx'] = {
 
   stuck: {
     title: 'Atascada en la mempool de BTC',
-    bumpAnchor: 'Acelerar con ancla P2A',
     bumpChange: 'CPFP con el cambio',
-    bumpedAnchor: (n: number) =>
-      n === 1
-        ? 'Se agregó 1 transacción hija CPFP; se confirmarán juntas en el siguiente bloque BTC'
-        : `Se agregaron ${n} transacciones hijas CPFP; se confirmarán juntas en el siguiente bloque BTC`,
     bumpedChange: 'Se agregó una transacción hija CPFP con el cambio; se confirmarán juntas en el siguiente bloque BTC',
     bumpFailed: 'No hay salidas que gastar; no se puede hacer CPFP',
   },
@@ -74,16 +69,13 @@ const tx: Messages['tx'] = {
       producer: 'Fondos del productor',
       commit: 'De la transacción de compromiso',
       payer: 'Entrada de pago',
-      anchor: 'Ancla P2A (transacción padre)',
     },
     outRole: {
       change: 'Cambio',
       commitment: 'Salida de compromiso',
-      anchor: 'Ancla P2A',
       payment: 'Pago',
     },
     producerChange: 'Cambio del productor',
-    anyone: 'Gastable por cualquiera',
     commitmentHint: 'La gasta la transacción de revelación',
     opReturn: {
       native: 'NativeOp: una VmOp',

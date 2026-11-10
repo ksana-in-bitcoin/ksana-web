@@ -32,9 +32,8 @@ describe('A transaction’s structure', () => {
     expect(diagram(commit)).toEqual([
       'in 1 Inputs · 1',
       'in 2 #0 Producer funding',
-      'out 1 Outputs · 2',
-      'out 2 #0 Producer change',
-      'out 3 #1 Commitment output',
+      'out 1 Outputs · 1',
+      'out 2 #0 Commitment output',
     ]);
   });
 
@@ -43,10 +42,9 @@ describe('A transaction’s structure', () => {
     expect(diagram(reveal)).toEqual([
       'in 1 Inputs · 1',
       'in 2 #0 From the',
-      'in 4 Witness envelope KSN1',
-      'out 1 Outputs · 2',
-      'out 2 #0 P2A anchor',
-      'out 3 #1 OP_RETURN Empty',
+      'in 3 Witness envelope KSN1',
+      'out 1 Outputs · 1',
+      'out 2 #0 Producer change',
     ]);
   });
 

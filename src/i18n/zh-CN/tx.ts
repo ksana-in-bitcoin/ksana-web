@@ -22,9 +22,7 @@ export default {
 
   stuck: {
     title: '卡在 BTC 内存池',
-    bumpAnchor: '用 P2A 锚点加速',
     bumpChange: '用找零做 CPFP',
-    bumpedAnchor: (n: number) => `已挂上 ${n} 笔 CPFP 子交易，下一个 BTC 块会一起确认`,
     bumpedChange: '已用找零挂上 CPFP 子交易，下一个 BTC 块会一起确认',
     bumpFailed: '没有可花的输出，无法做 CPFP',
   },
@@ -77,17 +75,13 @@ export default {
       producer: '出块者出资',
       commit: '来自提交交易',
       payer: '付款输入',
-      anchor: 'P2A 锚点（父交易）',
     },
     outRole: {
       change: '找零',
       commitment: '承诺输出',
-      anchor: 'P2A 锚点',
       payment: '付款',
     },
     producerChange: '出块者找零',
-    /** A P2A anchor has no owner */
-    anyone: '任何人可花',
     /** Commitment output: the reveal transaction spends it */
     commitmentHint: '由揭示交易花掉',
     opReturn: {

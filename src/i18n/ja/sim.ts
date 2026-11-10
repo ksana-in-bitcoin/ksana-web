@@ -109,7 +109,7 @@ const sim: Messages['sim'] = {
     censorOff: 'シナリオ：ブロック生成者がこのアカウントの取り込みを再開',
     feeSpikeOn: 'シナリオ：BTC 手数料率が 40\u00a0sat/vB に上昇し、決済トランザクションが停滞',
     feeSpikeOff: 'シナリオ：BTC 手数料率が元に戻る',
-    cpfpMany: (n: number) => `停滞中のトランザクション ${n} 件に P2A アンカーで CPFP`,
+    cpfpMany: (n: number) => `停滞中のトランザクション ${n} 件にお釣りで CPFP`,
     cpfpOne: '停滞中のトランザクションに CPFP',
     offline: (name: string) => `シナリオ：${head(name)}がオフライン`,
     online: 'シナリオ：ブロック生成者がオンラインに復帰',

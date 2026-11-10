@@ -208,19 +208,19 @@ export interface TxIn {
   owner: Hex | null;
   /** Address of the spent output, where the page has read the transaction it belongs to */
   address?: string;
-  /** producer: the producer's funding; commit: the reveal transaction spending the commit transaction's commitment output (script path, the envelope is in the witness); payer: the user's payment; anchor: P2A */
-  role: 'producer' | 'commit' | 'payer' | 'anchor';
-  scriptType: 'p2tr' | 'p2wpkh' | 'p2a' | 'envelope';
+  /** producer: the producer's funding; commit: the reveal transaction spending the commit transaction's commitment output (script path, the envelope is in the witness); payer: the user's payment, or the output a CPFP child spends */
+  role: 'producer' | 'commit' | 'payer';
+  scriptType: 'p2tr' | 'p2wpkh' | 'envelope';
   sighash: 'ALL' | 'DEFAULT';
 }
 
 export interface TxOut {
   valueSat: number;
-  /** commitment: the commit transaction's commitment output (P2TR, the leaf script is the envelope); op_return: a KSN1 data output (path C) or the reveal transaction's empty OP_RETURN */
-  role: 'change' | 'commitment' | 'op_return' | 'anchor' | 'payment';
+  /** commitment: the commit transaction's commitment output (P2TR, the leaf script is the envelope); op_return: a KSN1 data output (path C); change: on a reveal transaction, the producer's change (D-140) */
+  role: 'change' | 'commitment' | 'op_return' | 'payment';
   owner: Hex | null;
   address?: string;
-  scriptType: 'p2tr' | 'p2wpkh' | 'op_return' | 'p2a';
+  scriptType: 'p2tr' | 'p2wpkh' | 'op_return';
   /** KSN1 data output: number of data chunks and payload bytes */
   chunks?: number;
   payloadBytes?: number;

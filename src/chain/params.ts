@@ -182,5 +182,3 @@ export function emptyBlockWeight(streak: number): number {
   return Math.min(w, PARAMS.MAX_EMPTY_BLOCK_WEIGHT);
 }
 
-/** Value of the P2A anchor output, taken as the dust limit of Bitcoin Core 28 */
-export const P2A_VALUE_SAT = 240;

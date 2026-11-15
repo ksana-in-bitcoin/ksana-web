@@ -16,10 +16,11 @@ export function EntryCounts({ block }: { block: Block }) {
   let b = 0;
   let c = 0;
   let other = 0;
+  // The aggregate entry of a block with path B entries is counted in the total and has no figure of its own (core D-154)
   for (const e of block.entries) {
     if (e.entry.kind === 'Sponsored') b++;
     else if (e.entry.kind === 'Forced') c++;
-    else other++;
+    else if (e.entry.kind === 'Unlock') other++;
   }
   if (block.entries.length === 0) return <span className="muted small nobr">{t.ui.emptyBlock}</span>;
   return (
@@ -28,7 +29,7 @@ export function EntryCounts({ block }: { block: Block }) {
       <span className="entry-counts-split">
         {b > 0 && <span>B{b}</span>}
         {c > 0 && <span className="entry-counts-c">C{c}</span>}
-        {/* An unlock entry, the only other kind: a block holds one at most */}
+        {/* An unlock entry: a block holds one at most */}
         {other > 0 && <span className="entry-counts-word">{other > 1 ? `${t.ui.entryUnlock} ×${other}` : t.ui.entryUnlock}</span>}
       </span>
     </span>

@@ -183,6 +183,14 @@ function checkInvariants(s: Devnet) {
           seenOps.add(r.id);
           expect(r.blockHash).toBe(b.hash);
           expect(r.height).toBe(h);
+          // The record of a path B op in a block is the op as the block holds it: half its signature, and the bytes of its entry
+          if (e.entry.kind === 'Sponsored') {
+            expect(['HalfBip340', 'HalfBip322All']).toContain(r.op.sig.kind);
+            expect(r.op.sig.sig.length).toBe(64);
+            expect(e.dataBytes).toBe(1 + r.size);
+          } else {
+            expect(['Bip340', 'Bip322Simple']).toContain(r.op.sig.kind);
+          }
           expect(r.entryIndex).toBe(i);
           if (e.entry.kind === 'Forced') expect(r.path).toBe('C');
           else expect(r.path).toBe('B');

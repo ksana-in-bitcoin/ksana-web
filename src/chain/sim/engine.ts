@@ -1580,6 +1580,15 @@ export class Devnet {
 
   /** The operation's position: the block that executed it and the height of the chain block that accepted that block */
   private placeOp(r: OpRecord, blockHash: Hex, acceptedHeight: number, index: number, result: ExecResult) {
+    // A path B op is in its block by half its signature (core D-154): the record follows, once, as an op read from a node's block does
+    if (r.op.fee.kind === 'Token') {
+      const { kind, sig } = r.op.sig;
+      const bytes = sealedBytes(r) - 1;
+      if (kind === 'Bip340') r.op.sig = { kind: 'HalfBip340', sig: sig.slice(0, 64) };
+      // The witness is `01 41 <64-byte signature> 01`: the first half follows its two leading bytes
+      else if (kind === 'Bip322Simple') r.op.sig = { kind: 'HalfBip322All', sig: sig.slice(4, 68) };
+      r.size = bytes;
+    }
     r.blockHash = blockHash;
     r.height = acceptedHeight;
     r.entryIndex = index;

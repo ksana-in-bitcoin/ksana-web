@@ -543,6 +543,38 @@ describe('devnet simulator', () => {
     checkInvariants(s);
   });
 
+  it('a path B op in a block holds the first half of its signature under either scheme, and its size follows (core D-154)', () => {
+    // [scheme, its half form, the bytes the half form saves, the hex digits before the signature in the whole form]
+    const schemes = [
+      ['Bip340', 'HalfBip340', 32, 0],
+      // The witness stack `01 41 <64-byte signature> 01` behind a 4-byte length
+      ['Bip322Simple', 'HalfBip322All', 39, 4],
+    ] as const;
+    for (const [sigScheme, half, saved, lead] of schemes) {
+      const s = sim();
+      const res = s.submit(transfer(s, s.demoId, s.faucetId, 10n * KSA_UNIT, 'B', { sigScheme }));
+      if (!res.ok) throw new Error(res.message);
+      const pending = s.getOp(res.opId);
+      if (!pending) throw new Error('the op is not known');
+      expect(pending.blockHash).toBeUndefined();
+      expect(pending.op.sig.kind).toBe(sigScheme);
+      const whole = pending.op.sig.sig;
+      const size = pending.size;
+      expect(size).toBe(s.opSize('B', pending.op.action, sigScheme));
+
+      s.advanceTo(s.clock + 20 * SEC);
+      const r = s.getOp(res.opId);
+      if (!r?.blockHash) throw new Error('the op is in no block');
+      expect(r.op.sig).toEqual({ kind: half, sig: whole.slice(lead, lead + 64) });
+      expect(r.size).toBe(size - saved);
+      const block = s.getBlock(r.blockHash);
+      const entry = block?.entries.find((e) => e.entry.kind === 'Sponsored' && e.entry.opId === r.id);
+      expect(entry?.dataBytes).toBe(1 + r.size);
+      expect(block?.entries.at(-1)?.entry.kind).toBe('Aggregate');
+      checkInvariants(s);
+    }
+  });
+
   it('path B: submit → include → broadcast settlement → land on BTC → final', () => {
     const s = sim();
     const to = s.faucetId;

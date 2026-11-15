@@ -38,6 +38,7 @@ const ui: Messages['ui'] = {
     Forced: '強制收錄',
     Sponsored: '代付',
     Unlock: '解鎖',
+    Aggregate: '聚合',
   },
 
   progress: '操作進度',

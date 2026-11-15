@@ -34,6 +34,7 @@ const op: Messages['op'] = {
   /** VmOp plate */
   vmop: {
     sigHash: 'Signature hash',
+    sigHalf: (scheme: string) => `first half of a ${scheme} signature · the block’s aggregate answers for the second`,
     size: 'Encoded size',
     /** n is a formatted byte count */
     bytes: (n: string) => `${n} ${n === '1' ? 'byte' : 'bytes'}`,

@@ -37,6 +37,7 @@ const ui: Messages['ui'] = {
     Forced: '強制取り込み',
     Sponsored: '代払い',
     Unlock: 'ロック解除',
+    Aggregate: '集約',
   },
 
   progress: 'オペレーションの進捗',

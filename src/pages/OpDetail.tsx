@@ -2,7 +2,7 @@ import { networkOfChainId } from '@ksana/sdk';
 import { useChain, useNow } from '../app/store';
 import { useWalletPrefs } from '../app/prefs';
 import { FAIL_LABEL, opProgress, summarizeOp, STAGE_LABEL, transferOf, TX_STATUS_LABEL, txRoute } from '../chain/views';
-import type { Funds, OpRecord, VmEvent } from '../chain/types';
+import type { Funds, OpRecord, SigScheme, VmEvent } from '../chain/types';
 import { KSA_ASSET_ID, PARAMS } from '../chain/params';
 import { fmtAmount, fmtDuration, fmtInt, shortHash } from '../lib/format';
 import { AccountRef, AssetIssuer, BlockRef, BtcRef, FullHash, Hash, LookalikeNote } from '../components/Refs';
@@ -160,7 +160,7 @@ export function OpDetail({ id }: { id: string }) {
               {
                 label: 'sig',
                 value: <Hash value={r.op.sig.sig} head={16} tail={8} copy />,
-                hint: r.op.sig.kind === 'Bip340' ? 'BIP340 Schnorr' : 'BIP322 simple',
+                hint: sigHint(r.op.sig.kind, t.op.vmop.sigHalf),
               },
               // Not computed for a deployment on the node data source (its code is not kept) or for path C (the message ends with the carrying transaction's first input, D-086)
               sigHash && { label: t.op.vmop.sigHash, value: <Hash value={sigHash} head={16} tail={8} copy />, hint: 'tagged hash "Ksana/VmOp/v1"' },
@@ -236,6 +236,21 @@ export function OpDetail({ id }: { id: string }) {
       </details>
     </div>
   );
+}
+
+/** What the signature field holds: a whole signature, or in a block the first half of a path B operation's (core D-154) */
+function sigHint(kind: SigScheme['kind'], half: (scheme: string) => string): string {
+  switch (kind) {
+    case 'Bip340':
+      return 'BIP340 Schnorr';
+    case 'Bip322Simple':
+      return 'BIP322 simple';
+    case 'HalfBip340':
+      return half('BIP340 Schnorr');
+    case 'HalfBip322':
+    case 'HalfBip322All':
+      return half('BIP322 simple');
+  }
 }
 
 function FeeDetail({ r }: { r: OpRecord }) {

@@ -97,6 +97,7 @@ const block: Messages['block'] = {
     /** The group of the unlock entry (at most one a block): what it does */
     system: 'Unlock · fees and block rewards of settled blocks paid out',
     fast: 'Fast paths',
+    aggregate: 'Aggregate · one value answers for the second halves of the sponsored operations’ signatures',
     /** The unlock entry's row, after its tag: Up to #1,024 · index 3 · 12 blocks · total 36 KSA */
     unlockTo: (h: string, i: number) => `Up to #${h} · index ${i}`,
     unlockBlocks: (n: number) => `${n} ${n === 1 ? 'block' : 'blocks'}`,

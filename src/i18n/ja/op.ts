@@ -30,6 +30,7 @@ const op: Messages['op'] = {
 
   vmop: {
     sigHash: '署名ハッシュ',
+    sigHalf: (scheme: string) => `${scheme} 署名の前半 · 後半はブロックの集約が保証する`,
     size: 'エンコード長',
     bytes: (n: string) => `${n} バイト`,
     cap: (n: string) => `上限 ${n}`,

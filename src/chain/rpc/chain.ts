@@ -52,11 +52,10 @@ import {
   accountToAddress,
   emptyEntriesRoot,
   encodeVmOp,
-  feeFor,
+  pathBFee,
   fromHex,
   getLock,
   nativeOpFromTx,
-  opCost,
   p2trScriptFromOutputKey,
   paramsForChainId,
   subscribeBlocks,
@@ -3295,8 +3294,9 @@ export class RpcChain {
   estimateFee(): FeeEstimate {
     const feerate = this.fee ? Number(this.fee.feerate_sat_vb) : Math.max(PARAMS.MIN_SETTLEMENT_FEERATE, NODE_POLICY.SETTLEMENT_FEERATE);
     const amount = this.fee ? this.fee.path_b.amount : NODE_POLICY.MIN_TOKEN_FEE;
-    // The node's suggestion is for its reference transfer; an op of another cost scales by its own cost at the node's rate (RPC.md)
-    const perKib = this.fee ? this.fee.path_b.per_kib : 0n;
+    // The node's suggestion is for its reference transfer; an op of another cost scales by its own cost at the node's rate, and by its
+    // bytes at the rate of a node whose floor follows the Bitcoin fee rate (RPC.md, D-153)
+    const pathB = this.fee ? this.fee.path_b : { amount, per_kib: 0n, per_kib_data: 0n };
     const params = this.sdkParams;
     return {
       feerateSatVb: feerate,
@@ -3304,8 +3304,8 @@ export class RpcChain {
         amount,
         nodeMin: NODE_POLICY.MIN_TOKEN_FEE,
         producerMins: [],
-        forOp: (opBytes, maxGas) => feeFor(perKib, opCost(params, opBytes, BigInt(maxGas)), amount),
-        basis: perKib > 0n ? 'rate' : 'minimum',
+        forOp: (opBytes, maxGas) => pathBFee(params, pathB, opBytes, BigInt(maxGas)),
+        basis: pathB.per_kib > 0n || pathB.per_kib_data > 0n ? 'rate' : 'minimum',
       },
       market: { feeRate: feerate, minFeeRate: this.btcMinFeeRate },
       pathC: (opBytes, rate = feerate) => pathCFee(opBytes, rate),

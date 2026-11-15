@@ -42,6 +42,7 @@ export default {
     Forced: '强制收录',
     Sponsored: '代付',
     Unlock: '解锁',
+    Aggregate: '聚合',
   },
 
   progress: '操作进度',

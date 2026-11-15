@@ -37,6 +37,7 @@ const ui: Messages['ui'] = {
     Forced: 'Inclusión forzada',
     Sponsored: 'Patrocinada',
     Unlock: 'Desbloqueo',
+    Aggregate: 'Agregado',
   },
 
   progress: 'Progreso de la operación',

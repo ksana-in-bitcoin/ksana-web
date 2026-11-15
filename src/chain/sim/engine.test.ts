@@ -86,7 +86,7 @@ function checkInvariants(s: Devnet) {
   expect(s.settledHeight).toBeLessThan(s.blocks.length);
 
   const streaks = new Map<Hex, number>();
-  const order = { Forced: 0, Unlock: 1, Sponsored: 2 } as const;
+  const order = { Forced: 0, Unlock: 1, Sponsored: 2, Aggregate: 3 } as const;
   let lastUnlock = { height: 0, index: 0 };
   const seenOps = new Set<Hex>();
 
@@ -110,7 +110,7 @@ function checkInvariants(s: Devnet) {
     }
 
     for (const b of accepted(s, c)) {
-      // Entry order: forced inclusions, at most one unlock, fast path
+      // Entry order: forced inclusions, at most one unlock, fast path, and after any fast-path entry the one aggregate (core D-154)
       let rank = -1;
       let unlocks = 0;
       for (const e of b.entries) {
@@ -120,6 +120,9 @@ function checkInvariants(s: Devnet) {
         if (e.entry.kind === 'Unlock') unlocks++;
       }
       expect(unlocks).toBeLessThanOrEqual(1);
+      const fast = b.entries.filter((e) => e.entry.kind === 'Sponsored').length;
+      expect(b.entries.filter((e) => e.entry.kind === 'Aggregate').length).toBe(fast ? 1 : 0);
+      if (fast) expect(b.entries[b.entries.length - 1]?.entry.kind).toBe('Aggregate');
       expect(b.needsSettlement).toBe(b.entries.some((e) => e.entry.kind !== 'Forced'));
       // Two-speed difficulty: weight 1 with entries, otherwise by the selected parent's empty-block streak
       const w = b.entries.length ? 1 : emptyBlockWeight(streakOf(s, s.getBlock(b.header.parents[0] ?? '') as Block, streaks));
@@ -164,6 +167,12 @@ function checkInvariants(s: Devnet) {
             expect(e.entry.blocks?.length).toBeGreaterThan(0);
             expect(e.entry.amount).toBeDefined();
           }
+          continue;
+        }
+        if (e.entry.kind === 'Aggregate') {
+          // The aggregate changes no state; in a parallel block it is not accepted until the block is merged
+          expect(e.result.gasUsed).toBe(0);
+          expect(e.result.events).toEqual([]);
           continue;
         }
         const r = s.getOp(e.entry.opId);

@@ -80,6 +80,7 @@ const block: Messages['block'] = {
     forced: '強制收錄 · 來自 BTC',
     system: '解鎖 · 已結算區塊的手續費與出塊獎勵到帳',
     fast: '快速路徑',
+    aggregate: '聚合 · 一個值為各筆代付操作簽名的後一半作保',
     unlockTo: (h: string, i: number) => `至 #${h} · 序號 ${i}`,
     unlockBlocks: (n: number) => `${n} 個區塊`,
     unlockTotal: '共',

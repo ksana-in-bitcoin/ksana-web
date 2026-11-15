@@ -292,6 +292,8 @@ export function toEntry(e: SdkEntry): Entry {
       return { kind: 'Sponsored', opId: opIdOf(e.op) };
     case 'Unlock':
       return { kind: 'Unlock', height: Number(e.height), index: e.index };
+    case 'Aggregate':
+      return { kind: 'Aggregate', s: toHex(e.s) };
   }
 }
 

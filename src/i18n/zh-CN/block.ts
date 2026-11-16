@@ -96,6 +96,7 @@ export default {
     /** The group of the unlock entry (at most one a block): what it does */
     system: '解锁 · 已结算块的手续费与出块奖励到账',
     fast: '快速路径',
+    aggregate: '聚合 · 一个值为各笔代付操作签名的后一半作保',
     /** The unlock entry's row, after its tag: up to #1,024 · index 3 · 12 blocks · total 36 KSA */
     unlockTo: (h: string, i: number) => `至 #${h} · 序号 ${i}`,
     unlockBlocks: (n: number) => `${n} 个块`,

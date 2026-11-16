@@ -78,6 +78,7 @@ const block: Messages['block'] = {
     forced: '강제 포함 · BTC에서',
     system: '잠금 해제 · 정산된 블록의 수수료와 블록 보상 지급',
     fast: '빠른 경로',
+    aggregate: '집계 · 대납 작업 서명의 뒤쪽 절반을 하나의 값이 보증',
     unlockTo: (h: string, i: number) => `#${h}까지 · 인덱스 ${i}`,
     unlockBlocks: (n: number) => `${n}개 블록`,
     unlockTotal: '합계',

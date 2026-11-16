@@ -81,6 +81,7 @@ const block: Messages['block'] = {
     forced: '強制取り込み · BTC から',
     system: 'ロック解除 · 決済済みブロックの手数料とブロック報酬を支払う',
     fast: '高速パス',
+    aggregate: '集約 · 代払い操作の署名の後半をひとつの値がまとめて保証する',
     unlockTo: (h: string, i: number) => `#${h} まで · 番号 ${i}`,
     unlockBlocks: (n: number) => `${n} ブロック`,
     unlockTotal: '合計',

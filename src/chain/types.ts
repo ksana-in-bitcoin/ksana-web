@@ -39,7 +39,11 @@ export type Action =
   | { kind: 'Call'; contract: Hex; method: string; args: CallArgs; funds?: Funds[] }
   | { kind: 'AssetTransfer'; asset: Hex; to: Hex; amount: bigint };
 
-export type SigScheme = { kind: 'Bip340'; sig: Hex } | { kind: 'Bip322Simple'; sig: Hex };
+/**
+ * A block holds a path B operation by the first half of its signature (the `Half…` kinds, 32 bytes), and the block's aggregate entry
+ * answers for the second halves (core D-154)
+ */
+export type SigScheme = { kind: 'Bip340' | 'Bip322Simple' | 'HalfBip340' | 'HalfBip322' | 'HalfBip322All'; sig: Hex };
 
 export interface VmOp {
   version: number;
@@ -106,7 +110,7 @@ export type AssetChange =
   | { kind: 'allow'; asset: Hex; account: Hex; allowed: boolean; events: number }
   | { kind: 'pause'; asset: Hex; paused: boolean; events: number };
 
-export type EntryKind = 'Forced' | 'Sponsored' | 'Unlock';
+export type EntryKind = 'Forced' | 'Sponsored' | 'Unlock' | 'Aggregate';
 
 export type Entry =
   | { kind: 'Forced'; btcTxid: Hex; opId: Hex }
@@ -116,7 +120,9 @@ export type Entry =
    * available balance. The unlocked blocks and amount are derived from local data and are empty when the node RPC data source has
    * not fetched those blocks
    */
-  | { kind: 'Unlock'; height: number; index: number; blocks?: Hex[]; amount?: bigint };
+  | { kind: 'Unlock'; height: number; index: number; blocks?: Hex[]; amount?: bigint }
+  /** The half-aggregate of the block's path B signatures, the last entry of a block that has any (core D-154) */
+  | { kind: 'Aggregate'; s: Hex };
 
 export interface EntryRecord {
   entry: Entry;

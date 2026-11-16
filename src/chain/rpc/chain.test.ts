@@ -14,6 +14,13 @@
  * The recording predates D-140: its settlement pairs were rewritten to that shape (the commit pays the commitment alone, the reveal
  * the change), their payloads as recorded, because the tests below name its heights and what was in the BTC mempool as it was
  * taken. fixtures/d140.json holds two pairs a D-140 node sent, their envelope data zstd-compressed (D-141), as that node gave them.
+ *
+ * It also predates D-154, and was brought to that shape for the same reason: the path B entries of its blocks hold half their
+ * signatures and each such block ends with the aggregate, worked out by the SDK from the whole signatures recorded (it verifies), in
+ * the node's answers and in the envelopes of the reveal transactions; the aggregate entry has the receipt a node gives it; and the
+ * path B op IDs are those of the half form. The headers (their entries_root and so the block hashes) and the commitments of the
+ * commit transactions are as recorded, which this page does not check. d140.json was left as that node gave it: its pairs carry
+ * whole signatures.
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
@@ -900,6 +907,35 @@ describe.skipIf(!fx || !!recordUrl)('Node data source (replaying recorded respon
     }
   });
 
+  it('a block with path B ops holds half of each signature and ends with their aggregate, which is no operation (core D-154)', async () => {
+    const { chain, f } = await load();
+    const r = chain.getOp(f.meta.op);
+    // The op ID is that of the op with half its signature, the form a block holds it in
+    expect(r?.op.sig.kind).toBe('HalfBip340');
+    expect(r?.op.sig.sig).toHaveLength(64);
+    let fast = 0;
+    for (const b of chain.blocks) {
+      if (!b) continue;
+      const sponsored = b.entries.filter((e) => e.entry.kind === 'Sponsored');
+      const aggregates = b.entries.filter((e) => e.entry.kind === 'Aggregate');
+      expect(aggregates.length).toBe(sponsored.length ? 1 : 0);
+      if (!sponsored.length) continue;
+      fast++;
+      const last = b.entries[b.entries.length - 1];
+      expect(last?.entry.kind).toBe('Aggregate');
+      if (last?.entry.kind !== 'Aggregate') continue;
+      expect(last.entry.s).toMatch(/^[0-9a-f]{64}$/);
+      // Its receipt is a success without gas, and it writes its variant and 32 bytes into the payload
+      expect(last.result).toMatchObject({ ok: true, gasUsed: 0, events: [] });
+      expect(last.dataBytes).toBe(33);
+      for (const e of sponsored) {
+        const op = e.entry.kind === 'Sponsored' ? chain.getOp(e.entry.opId) : undefined;
+        expect(op?.op.sig.kind).toBe('HalfBip340');
+      }
+    }
+    expect(fast).toBeGreaterThan(0);
+  });
+
   it('path B op: the account is the output key of the Taproot address (D-092), and the status agrees with the node', async () => {
     const { chain, f } = await load();
     const r = chain.getOp(f.meta.op);
@@ -946,6 +982,25 @@ describe.skipIf(!fx || !!recordUrl)('Node data source (replaying recorded respon
       expect(est.pathB.forOp(400, 1_000_000)).toBe(basis === 'rate' ? 1638n : 7n);
       expect(est.pathB.forOp(100, 50_000)).toBe(basis === 'rate' ? 300n : 7n);
     }
+  });
+
+  it('ksana_estimateFee: on a node whose floor follows the Bitcoin fee rate an op is suggested its bytes at that rate when that is more (D-153)', async () => {
+    const pathB = { amount: '300', per_kib: '2048', per_kib_data: '8192' };
+    const node = syntheticNode({ tip: 10, opsAt: [], finalAt: 10, pathB });
+    const chain = new RpcChain({ url: 'http://node.test', chain: 'devnet' }, { fetch: node.fetch, manual: true, window: 20 });
+    await chain.sync();
+    const est = chain.estimateFee();
+    expect(est.pathB.basis).toBe('rate');
+    // At 8 per byte of the op: 400 bytes are 3,200, above the 800 and the 1,638 of its cost; 30 bytes are 240, below the transfer's 300
+    expect(est.pathB.forOp(400, 50_000)).toBe(3200n);
+    expect(est.pathB.forOp(400, 1_000_000)).toBe(3200n);
+    expect(est.pathB.forOp(30, 50_000)).toBe(300n);
+    // A cost rate of 0 with a bytes rate is still a rate
+    const byBytes = syntheticNode({ tip: 10, opsAt: [], finalAt: 10, pathB: { amount: '7', per_kib: '0', per_kib_data: '1024' } });
+    const other = new RpcChain({ url: 'http://node.test', chain: 'devnet' }, { fetch: byBytes.fetch, manual: true, window: 20 });
+    await other.sync();
+    expect(other.estimateFee().pathB.basis).toBe('rate');
+    expect(other.estimateFee().pathB.forOp(400, 1_000_000)).toBe(400n);
   });
 
   it('account: balances come from ksana_getAccount and the op list is sorted by acceptance height', async () => {
@@ -2055,7 +2110,7 @@ function syntheticNode(o: {
   /** The height of the operation an ID names, for `ksana_getOpStatus` (which it does not answer without) */
   opAt?: (id: string) => number | undefined;
   /** The path B suggestion of `ksana_estimateFee` (1 base unit at 1 per KiB unless given) */
-  pathB?: { amount: string; per_kib: string };
+  pathB?: { amount: string; per_kib: string; per_kib_data?: string };
   /** A path C operation (in JSON) a block force-included at `at`, carried by `btc_txid` (internal byte order), with its receipt's events */
   forced?: { at: number; btc_txid: string; op: unknown; events: { contract: string; data: string }[] };
   /** The events in the receipt of the path B operation at h, when it succeeds (none unless given) */

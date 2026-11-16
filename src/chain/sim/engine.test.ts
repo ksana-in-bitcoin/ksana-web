@@ -86,7 +86,7 @@ function checkInvariants(s: Devnet) {
   expect(s.settledHeight).toBeLessThan(s.blocks.length);
 
   const streaks = new Map<Hex, number>();
-  const order = { Forced: 0, Unlock: 1, Sponsored: 2 } as const;
+  const order = { Forced: 0, Unlock: 1, Sponsored: 2, Aggregate: 3 } as const;
   let lastUnlock = { height: 0, index: 0 };
   const seenOps = new Set<Hex>();
 
@@ -110,7 +110,7 @@ function checkInvariants(s: Devnet) {
     }
 
     for (const b of accepted(s, c)) {
-      // Entry order: forced inclusions, at most one unlock, fast path
+      // Entry order: forced inclusions, at most one unlock, fast path, and after any fast-path entry the one aggregate (core D-154)
       let rank = -1;
       let unlocks = 0;
       for (const e of b.entries) {
@@ -120,6 +120,9 @@ function checkInvariants(s: Devnet) {
         if (e.entry.kind === 'Unlock') unlocks++;
       }
       expect(unlocks).toBeLessThanOrEqual(1);
+      const fast = b.entries.filter((e) => e.entry.kind === 'Sponsored').length;
+      expect(b.entries.filter((e) => e.entry.kind === 'Aggregate').length).toBe(fast ? 1 : 0);
+      if (fast) expect(b.entries[b.entries.length - 1]?.entry.kind).toBe('Aggregate');
       expect(b.needsSettlement).toBe(b.entries.some((e) => e.entry.kind !== 'Forced'));
       // Two-speed difficulty: weight 1 with entries, otherwise by the selected parent's empty-block streak
       const w = b.entries.length ? 1 : emptyBlockWeight(streakOf(s, s.getBlock(b.header.parents[0] ?? '') as Block, streaks));
@@ -166,6 +169,12 @@ function checkInvariants(s: Devnet) {
           }
           continue;
         }
+        if (e.entry.kind === 'Aggregate') {
+          // The aggregate changes no state; in a parallel block it is not accepted until the block is merged
+          expect(e.result.gasUsed).toBe(0);
+          expect(e.result.events).toEqual([]);
+          continue;
+        }
         const r = s.getOp(e.entry.opId);
         expect(r).toBeDefined();
         if (!r) continue;
@@ -174,6 +183,14 @@ function checkInvariants(s: Devnet) {
           seenOps.add(r.id);
           expect(r.blockHash).toBe(b.hash);
           expect(r.height).toBe(h);
+          // The record of a path B op in a block is the op as the block holds it: half its signature, and the bytes of its entry
+          if (e.entry.kind === 'Sponsored') {
+            expect(['HalfBip340', 'HalfBip322All']).toContain(r.op.sig.kind);
+            expect(r.op.sig.sig.length).toBe(64);
+            expect(e.dataBytes).toBe(1 + r.size);
+          } else {
+            expect(['Bip340', 'Bip322Simple']).toContain(r.op.sig.kind);
+          }
           expect(r.entryIndex).toBe(i);
           if (e.entry.kind === 'Forced') expect(r.path).toBe('C');
           else expect(r.path).toBe('B');
@@ -524,6 +541,38 @@ describe('devnet simulator', () => {
     expect(tip.weight).toBe(1);
     expect(tip.entries.some((e) => e.entry.kind === 'Sponsored' && res.ok && e.entry.opId === res.opId)).toBe(true);
     checkInvariants(s);
+  });
+
+  it('a path B op in a block holds the first half of its signature under either scheme, and its size follows (core D-154)', () => {
+    // [scheme, its half form, the bytes the half form saves, the hex digits before the signature in the whole form]
+    const schemes = [
+      ['Bip340', 'HalfBip340', 32, 0],
+      // The witness stack `01 41 <64-byte signature> 01` behind a 4-byte length
+      ['Bip322Simple', 'HalfBip322All', 39, 4],
+    ] as const;
+    for (const [sigScheme, half, saved, lead] of schemes) {
+      const s = sim();
+      const res = s.submit(transfer(s, s.demoId, s.faucetId, 10n * KSA_UNIT, 'B', { sigScheme }));
+      if (!res.ok) throw new Error(res.message);
+      const pending = s.getOp(res.opId);
+      if (!pending) throw new Error('the op is not known');
+      expect(pending.blockHash).toBeUndefined();
+      expect(pending.op.sig.kind).toBe(sigScheme);
+      const whole = pending.op.sig.sig;
+      const size = pending.size;
+      expect(size).toBe(s.opSize('B', pending.op.action, sigScheme));
+
+      s.advanceTo(s.clock + 20 * SEC);
+      const r = s.getOp(res.opId);
+      if (!r?.blockHash) throw new Error('the op is in no block');
+      expect(r.op.sig).toEqual({ kind: half, sig: whole.slice(lead, lead + 64) });
+      expect(r.size).toBe(size - saved);
+      const block = s.getBlock(r.blockHash);
+      const entry = block?.entries.find((e) => e.entry.kind === 'Sponsored' && e.entry.opId === r.id);
+      expect(entry?.dataBytes).toBe(1 + r.size);
+      expect(block?.entries.at(-1)?.entry.kind).toBe('Aggregate');
+      checkInvariants(s);
+    }
   });
 
   it('path B: submit → include → broadcast settlement → land on BTC → final', () => {

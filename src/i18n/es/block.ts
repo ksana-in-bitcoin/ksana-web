@@ -80,6 +80,7 @@ const block: Messages['block'] = {
     forced: 'Inclusión forzada · Desde BTC',
     system: 'Desbloqueo · se abonan las comisiones y recompensas de los bloques liquidados',
     fast: 'Rutas rápidas',
+    aggregate: 'Agregado · un solo valor responde por las segundas mitades de las firmas de las operaciones patrocinadas',
     unlockTo: (h: string, i: number) => `Hasta #${h} · índice ${i}`,
     unlockBlocks: (n: number) => (n === 1 ? '1 bloque' : `${n} bloques`),
     unlockTotal: 'total',

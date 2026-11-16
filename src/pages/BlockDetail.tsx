@@ -431,7 +431,8 @@ function BtcConfs({ height }: { height: number }) {
   );
 }
 
-const unlockRow = (x: Row) => x.e.entry.kind === 'Unlock';
+// The entries that carry no operation: an unlock and the block's aggregate
+const unlockRow = (x: Row) => x.e.entry.kind === 'Unlock' || x.e.entry.kind === 'Aggregate';
 
 function Entries({ b }: { b: Block }) {
   const sim = useChain();
@@ -446,6 +447,7 @@ function Entries({ b }: { b: Block }) {
     { key: 'forced', title: en.forced, rows: rows.filter((x) => x.e.entry.kind === 'Forced') },
     { key: 'system', title: en.system, rows: rows.filter((x) => x.e.entry.kind === 'Unlock') },
     { key: 'fast', title: en.fast, rows: rows.filter((x) => x.e.entry.kind === 'Sponsored') },
+    { key: 'aggregate', title: en.aggregate, rows: rows.filter((x) => x.e.entry.kind === 'Aggregate') },
   ].filter((g) => g.rows.length > 0);
   const skipped = b.entries.filter((e) => e.result.reason === 'skipped').length;
 
@@ -485,6 +487,8 @@ function Entries({ b }: { b: Block }) {
             </span>
           );
         }
+        // The 32 bytes that answer for the second halves of the block's path B signatures (core D-154)
+        if (entry.kind === 'Aggregate') return <Hash value={entry.s} head={16} tail={8} copy />;
         return null;
       },
     },

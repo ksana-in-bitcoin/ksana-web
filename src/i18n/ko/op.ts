@@ -28,6 +28,7 @@ const op: Messages['op'] = {
 
   vmop: {
     sigHash: '서명 해시',
+    sigHalf: (scheme: string) => `${scheme} 서명의 앞쪽 절반 · 뒤쪽 절반은 블록의 집계가 보증`,
     size: '인코딩 길이',
     bytes: (n: string) => `${n}바이트`,
     cap: (n: string) => `상한 ${n}`,

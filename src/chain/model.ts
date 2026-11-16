@@ -9,8 +9,8 @@ export interface FeeEstimate {
    * Path B. `amount`: the suggested sponsored fee of a plain KSA transfer, not below this node's minimum sponsored fee: in the simulator
    * the median path B amount over the last 20 chain blocks; on a node its `path_b.amount`, the fee rate `path_b.per_kib` (the median of
    * the lowest path B fee rate of each of the last 20 main-chain blocks, not below its minimum rate) applied to the node's reference
-   * transfer (D-054, D-095). `forOp`: the suggestion for an op of that encoded size and `max_gas`, on a node the op's own cost at that
-   * rate (RPC.md: other ops scale by their own cost), not below `amount`. `basis`: what the suggestion rests on, the simulator's median,
+   * transfer (D-054, D-095). `forOp`: the suggestion for an op of that encoded size and `max_gas`, on a node the larger of the op's own
+   * cost at that rate and its bytes at `path_b.per_kib_data` (the SDK's `pathBFee`; D-153), not below `amount`. `basis`: what the suggestion rests on, the simulator's median,
    * a node's fee rate, or a node's minimum sponsored fee (its rate is 0, so `amount` is that minimum)
    */
   pathB: {

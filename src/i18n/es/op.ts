@@ -28,6 +28,7 @@ const op: Messages['op'] = {
 
   vmop: {
     sigHash: 'Hash de firma',
+    sigHalf: (scheme: string) => `primera mitad de una firma ${scheme} · el agregado del bloque responde por la segunda`,
     size: 'Tamaño codificado',
     bytes: (n: string) => (n === '1' ? '1 byte' : `${n} bytes`),
     cap: (n: string) => `Límite ${n}`,

@@ -29,6 +29,7 @@ const op: Messages['op'] = {
 
   vmop: {
     sigHash: '簽名雜湊',
+    sigHalf: (scheme: string) => `${scheme} 簽名的前一半 · 後一半由區塊的聚合值作保`,
     size: '編碼長度',
     bytes: (n: string) => `${n} 位元組`,
     cap: (n: string) => `上限 ${n}`,

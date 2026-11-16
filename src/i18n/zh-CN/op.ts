@@ -35,6 +35,7 @@ export default {
   /** VmOp plate */
   vmop: {
     sigHash: '签名哈希',
+    sigHalf: (scheme: string) => `${scheme} 签名的前一半 · 后一半由区块的聚合值作保`,
     size: '编码长度',
     /** n is a formatted byte count */
     bytes: (n: string) => `${n} 字节`,

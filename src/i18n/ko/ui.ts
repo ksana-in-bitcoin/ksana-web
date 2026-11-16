@@ -36,6 +36,7 @@ const ui: Messages['ui'] = {
     Forced: '강제 포함',
     Sponsored: '대납',
     Unlock: '잠금 해제',
+    Aggregate: '집계',
   },
 
   progress: '작업 진행 상황',

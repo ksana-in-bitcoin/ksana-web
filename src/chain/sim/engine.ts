@@ -90,6 +90,16 @@ const RELEASE_DELAY = 6;
 /** Byte size of an entry in the payload: a forced inclusion writes only btc_txid (1 + 32), an unlock writes the acceptance position (1 + 8 + 4) */
 const FORCED_BYTES = 33;
 const UNLOCK_BYTES = 13;
+/** The aggregate entry: its variant and the 32 bytes that answer for the second halves of the block's path B signatures (core D-154) */
+const AGGREGATE_BYTES = 33;
+/** What a path B op takes in a block: half its signature stays, its variant and 32 bytes (core D-154) */
+const sealedBytes = (r: OpRecord): number => 1 + r.size - (r.op.sig.kind === 'Bip340' ? 32 : r.op.sig.kind === 'Bip322Simple' ? 39 : 0);
+/** The aggregate entry changes no state: its receipt is a success without gas or events */
+const aggregateEntry = (block: Hex, result: ExecResult): EntryRecord => ({
+  entry: { kind: 'Aggregate', s: phash('aggregate', block) },
+  result,
+  dataBytes: AGGREGATE_BYTES,
+});
 
 /** How long a producer must be offline before another producer rebuilds its settlement transaction with its own funding */
 const RESCUE_AFTER = 25 * SEC;
@@ -1073,7 +1083,7 @@ export class Devnet {
     const op = this.buildOp(draft);
     const sigLen = op.sig.kind === 'Bip340' ? 64 : 67;
     op.sig = { kind: op.sig.kind, sig: this.rng.hex(sigLen) };
-    const size = this.opSize(draft.path, draft.action, op.sig.kind);
+    const size = this.opSize(draft.path, draft.action, op.sig.kind === 'Bip340' ? 'Bip340' : 'Bip322Simple');
     // Path C: first build the native transaction funded by the user's UTXOs; without funding the op is not accepted
     let native: BtcTx | null = null;
     if (draft.path === 'C') {
@@ -1482,10 +1492,15 @@ export class Devnet {
       for (const r of picked) {
         const result = this.executeOp(r, ctx, 'strict');
         this.placeOp(r, hash, height, entries.length, result);
-        entries.push({ entry: { kind: 'Sponsored', opId: r.id }, result, dataBytes: 1 + r.size });
+        entries.push({ entry: { kind: 'Sponsored', opId: r.id }, result, dataBytes: sealedBytes(r) });
         gasUsed += result.gasUsed;
         maxGasSum += r.op.maxGas;
-        dataBytes += 1 + r.size;
+        dataBytes += sealedBytes(r);
+      }
+      // A block with path B entries ends with their aggregate (core D-154)
+      if (picked.length) {
+        entries.push(aggregateEntry(hash, { ok: true, gasUsed: 0, events: [] }));
+        dataBytes += AGGREGATE_BYTES;
       }
       this.mempool = this.mempool.filter((r) => !picked.includes(r));
     }
@@ -1565,6 +1580,15 @@ export class Devnet {
 
   /** The operation's position: the block that executed it and the height of the chain block that accepted that block */
   private placeOp(r: OpRecord, blockHash: Hex, acceptedHeight: number, index: number, result: ExecResult) {
+    // A path B op is in its block by half its signature (core D-154): the record follows, once, as an op read from a node's block does
+    if (r.op.fee.kind === 'Token') {
+      const { kind, sig } = r.op.sig;
+      const bytes = sealedBytes(r) - 1;
+      if (kind === 'Bip340') r.op.sig = { kind: 'HalfBip340', sig: sig.slice(0, 64) };
+      // The witness is `01 41 <64-byte signature> 01`: the first half follows its two leading bytes
+      else if (kind === 'Bip322Simple') r.op.sig = { kind: 'HalfBip322All', sig: sig.slice(4, 68) };
+      r.size = bytes;
+    }
     r.blockHash = blockHash;
     r.height = acceptedHeight;
     r.entryIndex = index;
@@ -1698,9 +1722,13 @@ export class Devnet {
       dataBytes += UNLOCK_BYTES;
     }
     for (const r of plan.picked) {
-      entries.push({ entry: { kind: 'Sponsored', opId: r.id }, result: UNACCEPTED, dataBytes: 1 + r.size });
-      dataBytes += 1 + r.size;
+      entries.push({ entry: { kind: 'Sponsored', opId: r.id }, result: UNACCEPTED, dataBytes: sealedBytes(r) });
+      dataBytes += sealedBytes(r);
       maxGasSum += r.op.maxGas;
+    }
+    if (plan.picked.length) {
+      entries.push(aggregateEntry(hash, UNACCEPTED));
+      dataBytes += AGGREGATE_BYTES;
     }
     // The parallel block is found at about the same time as the chain block, and not before the submission time of the operations it includes
     let latest = 0;
@@ -1768,6 +1796,8 @@ export class Devnet {
     const entry = e.entry;
     // An unlock entry of a merged block is always skipped: only a chain block's own unlock entry moves the cursor (D-100)
     if (entry.kind === 'Unlock') return skip(lazy((m) => m.sim.exec.mergedUnlock));
+    // The aggregate of a merged block changes no state (core D-154)
+    if (entry.kind === 'Aggregate') return { ok: true, gasUsed: 0, events: [] };
     const r = this.ops.get(entry.opId);
     if (!r) return skip(lazy((m) => m.sim.exec.unknownOp));
     const markSkipped = (reason: () => string) => {
